@@ -9,7 +9,7 @@ from .services import get_remaining_seconds
 
 from .scoring import score_attempt
 from .models import Question
-
+from django.http import JsonResponse
 
 def package_list(request):
     packages = Package.objects.filter(is_active=True).select_related("category")
@@ -111,43 +111,57 @@ def attempt_player(request, attempt_id: int):
     answer_obj, _ = AttemptAnswer.objects.get_or_create(attempt=attempt, question=current_question)
 
     if request.method == "POST":
-        action = request.POST.get("action")
+        action = request.POST.get("action")  # bisa None kalau user klik jump/nav
 
-        if action == "save":
-            # simpan pilihan
-            selected_ids = request.POST.getlist("choice")
-            with transaction.atomic():
-                answer_obj.choices.clear()
-                if selected_ids:
-                    choices = Choice.objects.filter(question=current_question, id__in=selected_ids)
-                    answer_obj.choices.add(*choices)
-                    answer_obj.answered_at = timezone.now()
-                else:
-                    answer_obj.answered_at = None
-                answer_obj.save()
-
-        elif action == "toggle_flag":
+        # 1) aksi yang tidak perlu autosave pilihan
+        if action == "toggle_flag":
             answer_obj.flagged = not answer_obj.flagged
             answer_obj.save(update_fields=["flagged"])
+            return redirect(f"{request.path}?q={idx}")
 
-        elif action == "clear":
+        if action == "clear":
             with transaction.atomic():
                 answer_obj.choices.clear()
                 answer_obj.answered_at = None
                 answer_obj.save()
+            return redirect(f"{request.path}?q={idx}")
 
-        elif action == "submit":
+        # 2) default: SAVE jawaban sekarang dulu (untuk nav/jump/submit)
+        selected_ids = request.POST.getlist("choice")
+        with transaction.atomic():
+            answer_obj.choices.clear()
+            if selected_ids:
+                choices = Choice.objects.filter(question=current_question, id__in=selected_ids)
+                answer_obj.choices.add(*choices)
+                answer_obj.answered_at = timezone.now()
+            else:
+                answer_obj.answered_at = None
+            answer_obj.save()
+
+        # 3) submit
+        if action == "submit":
             return redirect("attempt_submit", attempt_id=attempt.id)
 
-        # navigasi
+        # 4) navigasi prev/next
         nav = request.POST.get("nav")
         if nav == "prev":
             return redirect(f"{request.path}?q={max(0, idx-1)}")
         if nav == "next":
             return redirect(f"{request.path}?q={min(len(questions)-1, idx+1)}")
 
-        # stay di soal yang sama
+        # 5) jump dari grid
+        jump = request.POST.get("jump")
+        if jump is not None:
+            try:
+                jump_idx = int(jump)
+            except ValueError:
+                jump_idx = idx
+            jump_idx = max(0, min(len(questions) - 1, jump_idx))
+            return redirect(f"{request.path}?q={jump_idx}")
+
+        # fallback stay
         return redirect(f"{request.path}?q={idx}")
+
 
     # build grid status
     # status:
@@ -363,3 +377,41 @@ def attempt_review(request, attempt_id: int):
     )
 
 
+@login_required
+def attempt_autosave(request, attempt_id: int):
+    if request.method != "POST":
+        return JsonResponse({"ok": False, "error": "POST only"}, status=405)
+
+    attempt = get_object_or_404(Attempt, id=attempt_id, user=request.user)
+    if attempt.status != Attempt.Status.IN_PROGRESS:
+        return JsonResponse({"ok": False, "error": "Attempt not active"}, status=400)
+
+    questions = list(
+        Question.objects.filter(package=attempt.package, is_active=True)
+        .order_by("order_index", "id")
+    )
+    if not questions:
+        return JsonResponse({"ok": False, "error": "No questions"}, status=400)
+
+    # index soal aktif (kirim dari client)
+    try:
+        idx = int(request.POST.get("idx", attempt.current_index))
+    except ValueError:
+        idx = attempt.current_index
+    idx = max(0, min(idx, len(questions) - 1))
+    q = questions[idx]
+
+    answer_obj, _ = AttemptAnswer.objects.get_or_create(attempt=attempt, question=q)
+
+    selected_ids = request.POST.getlist("choice")
+    with transaction.atomic():
+        answer_obj.choices.clear()
+        if selected_ids:
+            choices = Choice.objects.filter(question=q, id__in=selected_ids)
+            answer_obj.choices.add(*choices)
+            answer_obj.answered_at = timezone.now()
+        else:
+            answer_obj.answered_at = None
+        answer_obj.save()
+
+    return JsonResponse({"ok": True})

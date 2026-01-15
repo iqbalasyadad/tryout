@@ -3,11 +3,11 @@
 {% block content %}
 <style>
   .layout { display:flex; gap:16px; align-items:flex-start; }
-  .sidebar { width:280px; border:1px solid #ddd; padding:12px; border-radius:10px; }
-  .main { flex:1; border:1px solid #ddd; padding:16px; border-radius:10px; }
+  .sidebar { width:280px; border:1px solid #ddd; padding:12px; border-radius:5px; }
+  .main { flex:1; border:1px solid #ddd; padding:16px; border-radius:5px; }
 
-  .grid { display:grid; grid-template-columns: repeat(5, 1fr); gap:10px; }
-  .qbtn { display:flex; align-items:center; justify-content:center; height:44px; border-radius:8px; border:2px solid #ccc; text-decoration:none; font-weight:600; }
+  .grid { display:grid; grid-template-columns: repeat(5, 1fr); gap:1px; }
+  .qbtn { display:flex; align-items:center; justify-content:center; height:30px; border-radius:1px; border:1px solid #ccc; text-decoration:none; font-weight:600; }
 
   .blank { background:#f4f4f4; border-color:#cfcfcf; color:#555; }
   .answered { background:#e9fff1; border-color:#4bd37b; color:#0b5a26; } /* benar */
@@ -15,14 +15,17 @@
   .flagged { background:#fff8dc; border-color:#ffd24d; color:#6a4b00; } /* ragu */
   .current { background:#e6f0ff; border-color:#2f6bff; color:#113a9c; }
 
-  .option { border:1px solid #ddd; padding:12px; border-radius:10px; margin-bottom:10px; }
+  .option { border:1px solid #ddd; padding:12px; border-radius:5px; margin-bottom:10px; }
   .opt-correct { border-color:#4bd37b; background:#e9fff1; }
   .opt-wrong { border-color:#ff8080; background:#ffefef; }
-  .pill { border:1px solid #ddd; padding:6px 10px; border-radius:999px; display:inline-block; }
+  .pill { border:1px solid #ddd; padding:6px 10px; border-radius:5px; display:inline-block; }
 </style>
 
 <h1>Review & Pembahasan</h1>
 <p class="pill"><b>{{ attempt.package.title }}</b> | Skor: {{ attempt.score }}/{{ attempt.max_score }}</p>
+<div class="pill" style="margin-bottom:12px;">
+  Skor Soal Ini: {{ q_score }}/{{ q_max }}
+</div>
 
 <div class="layout" style="margin-top:12px;">
   <aside class="sidebar">
@@ -37,10 +40,6 @@
       <a href="{% url 'attempt_result' attempt.id %}">← Kembali ke Hasil</a>
     </p>
   </aside>
-
-  <div class="pill" style="margin-bottom:12px;">
-    Skor Soal Ini: <b>{{ q_score }}</b> / <b>{{ q_max }}</b>
-  </div>
 
   <section class="main">
     <h2 style="margin-top:0;">Soal Nomor {{ idx|add:1 }}</h2>
@@ -60,7 +59,7 @@
     {% if q.answer_type == "WEIGHTED" %}
       {% for c in choices_view %}
         <div class="option {% if c.is_selected %}opt-correct{% endif %}">
-          <b>{{ c.label }}</b> {{ c.text }}
+          {{ c.label }}. {{ c.text }}
           <span style="margin-left:8px; opacity:.8;">
             ({{ c.points }} poin)
           </span>
@@ -81,9 +80,16 @@
           {% if c.is_correct %}opt-correct{% endif %}
           {% if c.is_selected and not c.is_correct %}opt-wrong{% endif %}
         ">
-          <b>{{ c.label }}</b> {{ c.text }}
-          {% if c.is_correct %}<span style="margin-left:8px;">✅ Benar</span>{% endif %}
-          {% if c.is_selected and not c.is_correct %}<span style="margin-left:8px;">❌ Pilihan kamu</span>{% endif %}
+          {{ c.label }}. {{ c.text }}
+
+          {% if c.is_correct and c.is_selected %}
+            <span style="margin-left:8px;">✅ Benar</span>
+            <span style="margin-left:8px;">🎯 Pilihan kamu</span>
+          {% elif c.is_correct %}
+            <span style="margin-left:8px;">✅ Benar</span>
+          {% elif c.is_selected %}
+            <span style="margin-left:8px;">❌ Pilihan kamu</span>
+          {% endif %}
         </div>
       {% endfor %}
     {% endif %}

@@ -4,20 +4,20 @@
 {% block content %}
 <style>
   .layout { display:flex; gap:16px; align-items:flex-start; }
-  .sidebar { width:280px; border:1px solid #ddd; padding:12px; border-radius:10px; }
-  .main { flex:1; border:1px solid #ddd; padding:16px; border-radius:10px; }
+  .sidebar { width:280px; border:1px solid #ddd; padding:12px; border-radius:5px; }
+  .main { flex:1; border:1px solid #ddd; padding:16px; border-radius:5px; }
 
-  .grid { display:grid; grid-template-columns: repeat(5, 1fr); gap:10px; }
-  .qbtn { display:flex; align-items:center; justify-content:center; height:44px; border-radius:8px; border:2px solid #ccc; text-decoration:none; font-weight:600; }
+  .grid { display:grid; grid-template-columns: repeat(5, 1fr); gap:1px; }
+  .qbtn { display:flex; align-items:center; justify-content:center; height:30px; border-radius:1px; border:1px solid #ccc; text-decoration:none; font-weight:600; }
 
-  .blank { background:#ffefef; border-color:#ff8080; color:#8a0000; }       /* merah */
-  .answered { background:#e9fff1; border-color:#4bd37b; color:#0b5a26; }   /* hijau */
-  .flagged { background:#fff8dc; border-color:#ffd24d; color:#6a4b00; }    /* kuning */
-  .current { background:#e6f0ff; border-color:#2f6bff; color:#113a9c; }    /* biru */
+  .blank { background:#ff0000; border-color:#ff0000; color:#ffffff; }       /* merah */
+  .answered { background:#02c248; border-color:#02c248; color:#ffffff; }   /* hijau */
+  .flagged { background:#e7b900; border-color:#e7b900; color:#ffffff; }    /* kuning */
+  .current { background:#0765f3; border-color:#0765f3; color:#ffffff; }    /* biru */
 
-  .option { border:1px solid #ddd; padding:12px; border-radius:10px; margin-bottom:10px; }
+  .option { border:1px solid #ddd; padding:12px; border-radius:5px; margin-bottom:10px; }
   .topbar { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
-  .pill { border:1px solid #ddd; padding:6px 10px; border-radius:999px; }
+  .pill { border:1px solid #ddd; padding:6px 10px; border-radius:5px; }
   .actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:14px; }
 </style>
 
@@ -37,24 +37,39 @@
     <h3 style="margin-top:0;">Navigasi</h3>
 
     <div style="font-size:12px; line-height:1.6; margin-bottom:10px;">
-      <div>🟥 Kosong: {{ counts.blank }}</div>
-      <div>🟩 Dijawab: {{ counts.answered }}</div>
-      <div>🟨 Ragu: {{ counts.flagged }}</div>
-      <div>Total: {{ counts.total }}</div>
+      <!-- <div>🟥 Blank: {{ counts.blank }}</div>
+      <div>🟩 Answered: {{ counts.answered }}</div>
+      <div>🟨 Flagged: {{ counts.flagged }}</div>
+      <div>Total: {{ counts.total }}</div> -->
+      <div>🟥 Blank: {{ counts.blank }} 🟩 Answered: {{ counts.answered }} 🟨 Flagged: {{ counts.flagged }}</div>
     </div>
 
     <div class="grid">
       {% for g in grid %}
-        <a class="qbtn {{ g.status }}" href="?q={{ g.idx }}">{{ g.num }}</a>
+        <button
+          type="submit"
+          form="answer-form"
+          class="qbtn {{ g.status }}"
+          name="jump"
+          value="{{ g.idx }}"
+          style="cursor:pointer;"
+        >
+          {{ g.num }}
+        </button>
       {% endfor %}
     </div>
-
-    <form method="post" style="margin-top:14px;">
-      {% csrf_token %}
-      <button name="action" value="submit" type="submit" style="width:100%; padding:10px; border-radius:10px;">
+    <br>
+    <div>
+      <button
+        type="submit"
+        form="answer-form"
+        name="action"
+        value="submit"
+      >
         Finish / Submit
       </button>
-    </form>
+    </div>
+
   </aside>
 
   <section class="main">
@@ -81,32 +96,32 @@
       {% endif %}
     </div>
 
-    <form method="post">
+    <form method="post" id="answer-form">
       {% csrf_token %}
 
       {% if is_multi %}
-        <input type="hidden" name="action" value="save">
+        <!-- <input type="hidden" name="action" value="save"> -->
         {% for c in current_question.choices.all %}
           <label class="option" style="display:block; cursor:pointer;">
             <input type="checkbox" name="choice" value="{{ c.id }}"
                    {% if c.id in selected_ids %}checked{% endif %}>
-            <b>{{ c.label }}</b> {{ c.text }}
+            {{ c.label }}. {{ c.text }}
           </label>
         {% endfor %}
       {% else %}
-        <input type="hidden" name="action" value="save">
+        <!-- <input type="hidden" name="action" value="save"> -->
         {% for c in current_question.choices.all %}
           <label class="option" style="display:block; cursor:pointer;">
             <input type="radio" name="choice" value="{{ c.id }}"
                    {% if c.id in selected_ids %}checked{% endif %}>
-            <b>{{ c.label }}</b> {{ c.text }}
+            {{ c.label }}. {{ c.text }}
           </label>
         {% endfor %}
       {% endif %}
 
       <div class="actions">
         <button type="submit" name="nav" value="prev">← Prev</button>
-        <button type="submit" name="action" value="clear">Kosongkan Jawaban</button>
+        <button type="submit" name="action" value="clear">Clear Answer</button>
         <button type="submit" name="action" value="toggle_flag">
             {% if answer_obj.flagged %}Unflag{% else %}Flag question{% endif %}
         </button>
@@ -118,6 +133,39 @@
     </form>
   </section>
 </div>
+<script>
+  (function(){
+    const form = document.getElementById("answer-form");
+    if(!form) return;
+
+    const idx = "{{ idx }}";
+    const url = "{% url 'attempt_autosave' attempt.id %}";
+    const csrftoken = form.querySelector('input[name="csrfmiddlewaretoken"]').value;
+
+    let t = null;
+    function autosave(){
+      const fd = new FormData(form);
+      fd.set("idx", idx);
+
+      fetch(url, {
+        method: "POST",
+        headers: { "X-CSRFToken": csrftoken },
+        body: fd
+      }).then(r => r.json()).then(data => {
+        // optional: tampilkan indikator "tersimpan"
+        // console.log(data);
+      }).catch(() => {});
+    }
+
+    form.addEventListener("change", (e) => {
+      if (e.target && e.target.name === "choice") {
+        clearTimeout(t);
+        t = setTimeout(autosave, 250); // debounce
+      }
+    });
+  })();
+</script>
+
 
 <script>
   // countdown visual (server tetap sumber kebenaran)
