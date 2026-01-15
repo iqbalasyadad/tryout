@@ -8,6 +8,7 @@ from .models import Attempt, AttemptAnswer, Choice, Package, Question
 from .services import get_remaining_seconds
 
 from .scoring import score_attempt
+from .models import Question
 
 
 def package_list(request):
@@ -306,6 +307,9 @@ def attempt_review(request, attempt_id: int):
 
     q = questions[idx]
     a = ans_map.get(q.id)
+    breakdown = score_attempt(attempt)
+    q_score = breakdown.per_question.get(q.id, 0)
+    q_max = breakdown.per_question_max.get(q.id, 0)
 
     selected_ids = set(a.choices.values_list("id", flat=True)) if a else set()
     correct_ids = set(q.choices.filter(is_correct=True).values_list("id", flat=True))
@@ -318,6 +322,7 @@ def attempt_review(request, attempt_id: int):
         choices_view.append({
             "label": c.label,
             "text": c.text,
+            "points": c.points,
             "is_selected": is_sel,
             "is_correct": is_cor,
         })
@@ -352,6 +357,8 @@ def attempt_review(request, attempt_id: int):
             "q": q,
             "grid": grid,
             "choices_view": choices_view,
+            "q_score": q_score,
+            "q_max": q_max,
         },
     )
 

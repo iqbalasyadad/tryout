@@ -38,6 +38,10 @@
     </p>
   </aside>
 
+  <div class="pill" style="margin-bottom:12px;">
+    Skor Soal Ini: <b>{{ q_score }}</b> / <b>{{ q_max }}</b>
+  </div>
+
   <section class="main">
     <h2 style="margin-top:0;">Soal Nomor {{ idx|add:1 }}</h2>
 
@@ -52,16 +56,38 @@
     {% endif %}
 
     <h3>Jawaban</h3>
-    {% for c in choices_view %}
-      <div class="option
-        {% if c.is_correct %}opt-correct{% endif %}
-        {% if c.is_selected and not c.is_correct %}opt-wrong{% endif %}
-      ">
-        <b>{{ c.label }}</b> {{ c.text }}
-        {% if c.is_correct %}<span style="margin-left:8px;">✅ Benar</span>{% endif %}
-        {% if c.is_selected and not c.is_correct %}<span style="margin-left:8px;">❌ Pilihan kamu</span>{% endif %}
-      </div>
-    {% endfor %}
+
+    {% if q.answer_type == "WEIGHTED" %}
+      {% for c in choices_view %}
+        <div class="option {% if c.is_selected %}opt-correct{% endif %}">
+          <b>{{ c.label }}</b> {{ c.text }}
+          <span style="margin-left:8px; opacity:.8;">
+            ({{ c.points }} poin)
+          </span>
+
+          {% if c.is_selected %}
+            <span style="margin-left:8px;">🎯 Dipilih</span>
+          {% endif %}
+
+          {# opsional: tampilkan "Kunci/Ideal" kalau kamu memang pakai is_correct sebagai opsi ideal #}
+          {% if c.is_correct %}
+            <span style="margin-left:8px;">⭐ Ideal</span>
+          {% endif %}
+        </div>
+      {% endfor %}
+    {% else %}
+      {% for c in choices_view %}
+        <div class="option
+          {% if c.is_correct %}opt-correct{% endif %}
+          {% if c.is_selected and not c.is_correct %}opt-wrong{% endif %}
+        ">
+          <b>{{ c.label }}</b> {{ c.text }}
+          {% if c.is_correct %}<span style="margin-left:8px;">✅ Benar</span>{% endif %}
+          {% if c.is_selected and not c.is_correct %}<span style="margin-left:8px;">❌ Pilihan kamu</span>{% endif %}
+        </div>
+      {% endfor %}
+    {% endif %}
+
 
 
     <h3>Pembahasan</h3>

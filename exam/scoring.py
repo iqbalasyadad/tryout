@@ -9,7 +9,8 @@ from .models import Attempt, AttemptAnswer, Choice, Question
 class ScoreBreakdown:
     total_score: int
     max_score: int
-    per_question: Dict[int, int]  # question_id -> score
+    per_question: Dict[int, int]       # question_id -> score
+    per_question_max: Dict[int, int]   # question_id -> max
 
 
 def _set_equals(a: Set[int], b: Set[int]) -> bool:
@@ -43,6 +44,7 @@ def score_attempt(attempt: Attempt) -> ScoreBreakdown:
     total_score = 0
     max_score = 0
     per_question: Dict[int, int] = {}
+    per_question_max: Dict[int, int] = {}
 
     for q in questions:
         a = ans_map.get(q.id)
@@ -75,5 +77,11 @@ def score_attempt(attempt: Attempt) -> ScoreBreakdown:
         per_question[q.id] = q_score
         total_score += q_score
         max_score += q_max
+        per_question_max[q.id] = q_max
 
-    return ScoreBreakdown(total_score=total_score, max_score=max_score, per_question=per_question)
+    return ScoreBreakdown(
+        total_score=total_score,
+        max_score=max_score,
+        per_question=per_question,
+        per_question_max=per_question_max
+    )
