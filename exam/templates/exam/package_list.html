@@ -1,0 +1,16 @@
+{% extends "core/base.html" %}
+{% block title %}Paket | Tryout{% endblock %}
+{% block content %}
+  <h1>Daftar Paket</h1>
+  <ul>
+    {% for p in packages %}
+      <li>
+        <a href="{% url 'package_detail' p.slug %}">{{ p.title }}</a>
+        - {{ p.category.name }} - {{ p.duration_minutes }} menit
+        {% if p.is_paid %}(Berbayar){% else %}(Gratis){% endif %}
+      </li>
+    {% empty %}
+      <li>Belum ada paket.</li>
+    {% endfor %}
+  </ul>
+{% endblock %}

@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{% block title %}Tryout{% endblock %}</title>
+</head>
+<body>
+  <header style="padding:12px; border-bottom:1px solid #ddd;">
+    <strong>TEMANTRYOUT</strong>
+    <span style="float:right;">
+      {% if request.user.is_authenticated %}
+        Hi, {{ request.user.username }} |
+        <a href="{% url 'logout' %}">Logout</a>
+      {% else %}
+        <a href="{% url 'login' %}">Login</a>
+      {% endif %}
+    </span>
+  </header>
+
+  <main style="padding:16px;">
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

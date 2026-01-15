@@ -1,0 +1,19 @@
+{% extends "core/base.html" %}
+{% block title %}Submit | {{ attempt.package.title }}{% endblock %}
+{% block content %}
+  <h1>Konfirmasi Submit</h1>
+  <p><b>{{ attempt.package.title }}</b> ({{ attempt.mode }})</p>
+
+  <ul>
+    <li>Total soal: {{ total }}</li>
+    <li>Sudah dijawab: {{ answered }}</li>
+    <li>Kosong: {{ blank }}</li>
+    <li>Ragu-ragu: {{ flagged }}</li>
+  </ul>
+
+  <form method="post" style="display:flex; gap:10px;">
+    {% csrf_token %}
+    <button type="submit">Submit Sekarang</button>
+    <a href="{% url 'attempt_player' attempt.id %}">Kembali</a>
+  </form>
+{% endblock %}

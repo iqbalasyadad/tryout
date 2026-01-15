@@ -1,0 +1,133 @@
+{% extends "core/base.html" %}
+{% block title %}Player | {{ attempt.package.title }}{% endblock %}
+
+{% block content %}
+<style>
+  .layout { display:flex; gap:16px; align-items:flex-start; }
+  .sidebar { width:280px; border:1px solid #ddd; padding:12px; border-radius:10px; }
+  .main { flex:1; border:1px solid #ddd; padding:16px; border-radius:10px; }
+
+  .grid { display:grid; grid-template-columns: repeat(5, 1fr); gap:10px; }
+  .qbtn { display:flex; align-items:center; justify-content:center; height:44px; border-radius:8px; border:2px solid #ccc; text-decoration:none; font-weight:600; }
+
+  .blank { background:#ffefef; border-color:#ff8080; color:#8a0000; }       /* merah */
+  .answered { background:#e9fff1; border-color:#4bd37b; color:#0b5a26; }   /* hijau */
+  .flagged { background:#fff8dc; border-color:#ffd24d; color:#6a4b00; }    /* kuning */
+  .current { background:#e6f0ff; border-color:#2f6bff; color:#113a9c; }    /* biru */
+
+  .option { border:1px solid #ddd; padding:12px; border-radius:10px; margin-bottom:10px; }
+  .topbar { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+  .pill { border:1px solid #ddd; padding:6px 10px; border-radius:999px; }
+  .actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:14px; }
+</style>
+
+<div class="topbar">
+  <div>
+    <b>{{ attempt.package.title }}</b><br>
+    <small>Mode: {{ attempt.mode }} | Soal {{ idx|add:1 }} dari {{ counts.total }}</small>
+  </div>
+  <div class="pill">
+    Waktu tersisa:
+    <b id="timer">{{ time_info.remaining_seconds }}</b> detik
+  </div>
+</div>
+
+<div class="layout">
+  <aside class="sidebar">
+    <h3 style="margin-top:0;">Navigasi</h3>
+
+    <div style="font-size:12px; line-height:1.6; margin-bottom:10px;">
+      <div>🟥 Kosong: {{ counts.blank }}</div>
+      <div>🟩 Dijawab: {{ counts.answered }}</div>
+      <div>🟨 Ragu: {{ counts.flagged }}</div>
+      <div>Total: {{ counts.total }}</div>
+    </div>
+
+    <div class="grid">
+      {% for g in grid %}
+        <a class="qbtn {{ g.status }}" href="?q={{ g.idx }}">{{ g.num }}</a>
+      {% endfor %}
+    </div>
+
+    <form method="post" style="margin-top:14px;">
+      {% csrf_token %}
+      <button name="action" value="submit" type="submit" style="width:100%; padding:10px; border-radius:10px;">
+        Finish / Submit
+      </button>
+    </form>
+  </aside>
+
+  <section class="main">
+    <h2 style="margin-top:0;">Soal Nomor {{ idx|add:1 }}</h2>
+    {% if current_question.section %}
+      <div style="color:#2f6bff; font-weight:600; margin-bottom:10px;">
+        {{ current_question.section.title }}
+      </div>
+    {% endif %}
+
+    <div style="margin-bottom:14px;">
+      <div style="white-space:pre-line;">{{ current_question.stem }}</div>
+
+      {% if current_question.image %}
+        <div style="margin-top:10px;">
+          <img src="{{ current_question.image.url }}" style="max-width:100%; border-radius:10px; border:1px solid #eee;">
+        </div>
+      {% endif %}
+
+      {% if current_question.audio %}
+        <div style="margin-top:10px;">
+          <audio controls src="{{ current_question.audio.url }}" style="width:100%;"></audio>
+        </div>
+      {% endif %}
+    </div>
+
+    <form method="post">
+      {% csrf_token %}
+
+      {% if is_multi %}
+        <input type="hidden" name="action" value="save">
+        {% for c in current_question.choices.all %}
+          <label class="option" style="display:block; cursor:pointer;">
+            <input type="checkbox" name="choice" value="{{ c.id }}"
+                   {% if c.id in selected_ids %}checked{% endif %}>
+            <b>{{ c.label }}</b> {{ c.text }}
+          </label>
+        {% endfor %}
+      {% else %}
+        <input type="hidden" name="action" value="save">
+        {% for c in current_question.choices.all %}
+          <label class="option" style="display:block; cursor:pointer;">
+            <input type="radio" name="choice" value="{{ c.id }}"
+                   {% if c.id in selected_ids %}checked{% endif %}>
+            <b>{{ c.label }}</b> {{ c.text }}
+          </label>
+        {% endfor %}
+      {% endif %}
+
+      <div class="actions">
+        <button type="submit" name="nav" value="prev">← Prev</button>
+        <button type="submit" name="action" value="clear">Kosongkan Jawaban</button>
+        <button type="submit" name="action" value="toggle_flag">
+            {% if answer_obj.flagged %}Unflag{% else %}Flag question{% endif %}
+        </button>
+        <button type="submit" name="nav" value="next">Next →</button>
+
+        <!-- <button type="submit" name="action" value="submit">Submit</button> -->
+      </div>
+      
+    </form>
+  </section>
+</div>
+
+<script>
+  // countdown visual (server tetap sumber kebenaran)
+  (function(){
+    let s = parseInt(document.getElementById("timer").textContent || "0", 10);
+    const el = document.getElementById("timer");
+    setInterval(() => {
+      if (s > 0) s -= 1;
+      el.textContent = String(s);
+    }, 1000);
+  })();
+</script>
+{% endblock %}

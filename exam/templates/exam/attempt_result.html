@@ -1,0 +1,22 @@
+{% extends "core/base.html" %}
+{% block title %}Hasil | {{ attempt.package.title }}{% endblock %}
+{% block content %}
+  <h1>Hasil Attempt</h1>
+  <p><b>{{ attempt.package.title }}</b> ({{ attempt.mode }})</p>
+  <p>Status: <b>{{ attempt.status }}</b></p>
+
+  <h2>Skor: {{ attempt.score }} / {{ attempt.max_score }}</h2>
+
+  <ul>
+    <li>Total soal: {{ total }}</li>
+    <li>Sudah dijawab: {{ answered }}</li>
+    <li>Kosong: {{ blank }}</li>
+    <li>Ragu-ragu: {{ flagged }}</li>
+  </ul>
+
+  <p>
+    <a href="{% url 'attempt_review' attempt.id %}">Review & Pembahasan →</a>
+  </p>
+
+  <a href="{% url 'package_detail' attempt.package.slug %}">Kembali ke Paket</a>
+{% endblock %}

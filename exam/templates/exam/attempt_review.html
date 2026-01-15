@@ -1,0 +1,80 @@
+{% extends "core/base.html" %}
+{% block title %}Review | {{ attempt.package.title }}{% endblock %}
+{% block content %}
+<style>
+  .layout { display:flex; gap:16px; align-items:flex-start; }
+  .sidebar { width:280px; border:1px solid #ddd; padding:12px; border-radius:10px; }
+  .main { flex:1; border:1px solid #ddd; padding:16px; border-radius:10px; }
+
+  .grid { display:grid; grid-template-columns: repeat(5, 1fr); gap:10px; }
+  .qbtn { display:flex; align-items:center; justify-content:center; height:44px; border-radius:8px; border:2px solid #ccc; text-decoration:none; font-weight:600; }
+
+  .blank { background:#f4f4f4; border-color:#cfcfcf; color:#555; }
+  .answered { background:#e9fff1; border-color:#4bd37b; color:#0b5a26; } /* benar */
+  .wrong { background:#ffefef; border-color:#ff8080; color:#8a0000; }   /* salah */
+  .flagged { background:#fff8dc; border-color:#ffd24d; color:#6a4b00; } /* ragu */
+  .current { background:#e6f0ff; border-color:#2f6bff; color:#113a9c; }
+
+  .option { border:1px solid #ddd; padding:12px; border-radius:10px; margin-bottom:10px; }
+  .opt-correct { border-color:#4bd37b; background:#e9fff1; }
+  .opt-wrong { border-color:#ff8080; background:#ffefef; }
+  .pill { border:1px solid #ddd; padding:6px 10px; border-radius:999px; display:inline-block; }
+</style>
+
+<h1>Review & Pembahasan</h1>
+<p class="pill"><b>{{ attempt.package.title }}</b> | Skor: {{ attempt.score }}/{{ attempt.max_score }}</p>
+
+<div class="layout" style="margin-top:12px;">
+  <aside class="sidebar">
+    <h3 style="margin-top:0;">Navigasi</h3>
+    <div class="grid">
+      {% for g in grid %}
+        <a class="qbtn {{ g.status }}" href="?q={{ g.idx }}">{{ g.num }}</a>
+      {% endfor %}
+    </div>
+
+    <p style="margin-top:12px;">
+      <a href="{% url 'attempt_result' attempt.id %}">← Kembali ke Hasil</a>
+    </p>
+  </aside>
+
+  <section class="main">
+    <h2 style="margin-top:0;">Soal Nomor {{ idx|add:1 }}</h2>
+
+    <div style="white-space:pre-line; margin-bottom:12px;">{{ q.stem }}</div>
+
+    {% if q.image %}
+      <img src="{{ q.image.url }}" style="max-width:100%; border-radius:10px; border:1px solid #eee; margin-bottom:12px;">
+    {% endif %}
+
+    {% if q.audio %}
+      <audio controls src="{{ q.audio.url }}" style="width:100%; margin-bottom:12px;"></audio>
+    {% endif %}
+
+    <h3>Jawaban</h3>
+    {% for c in choices_view %}
+      <div class="option
+        {% if c.is_correct %}opt-correct{% endif %}
+        {% if c.is_selected and not c.is_correct %}opt-wrong{% endif %}
+      ">
+        <b>{{ c.label }}</b> {{ c.text }}
+        {% if c.is_correct %}<span style="margin-left:8px;">✅ Benar</span>{% endif %}
+        {% if c.is_selected and not c.is_correct %}<span style="margin-left:8px;">❌ Pilihan kamu</span>{% endif %}
+      </div>
+    {% endfor %}
+
+
+    <h3>Pembahasan</h3>
+    {% if q.explanation %}
+      <div style="white-space:pre-line;">{{ q.explanation }}</div>
+    {% else %}
+      <i>Belum ada pembahasan untuk soal ini.</i>
+    {% endif %}
+
+    <div style="display:flex; gap:10px; margin-top:14px;">
+      <a href="?q={{ idx|add:-1 }}">← Prev</a>
+      <a href="?q={{ idx|add:1 }}">Next →</a>
+    </div>
+  </section>
+</div>
+{% endblock %}
