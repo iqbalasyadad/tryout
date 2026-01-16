@@ -10,12 +10,46 @@
   <hr>
 
   {% if request.user.is_authenticated %}
-    <a href="{% url 'start_attempt' package.slug %}?mode=TRYOUT">Mulai Tryout</a>
-    |
-    <a href="{% url 'start_attempt' package.slug %}?mode=LEARN">Mode Belajar</a>
+
+    <form method="post" action="{% url 'toggle_favorite' package.slug %}" style="display:inline;">
+      {% csrf_token %}
+      <button type="submit">
+        {% if up and up.is_favorite %}★ Favorit{% else %}☆ Tambah Favorit{% endif %}
+      </button>
+    </form>
+
+    {% if package.is_paid %}
+      {% if up and up.is_purchased %}
+        <span style="margin-left:10px;">✅ Sudah dibeli</span>
+      {% else %}
+        <form method="post" action="{% url 'purchase_package' package.slug %}" style="display:inline; margin-left:10px;">
+          {% csrf_token %}
+          <button type="submit">Beli (MVP)</button>
+        </form>
+      {% endif %}
+    {% endif %}
+
+    <hr>
+
+    {% if not package.is_paid %}
+      <a href="{% url 'start_attempt' package.slug %}?mode=TRYOUT">Mulai Tryout</a>
+      |
+      <a href="{% url 'start_attempt' package.slug %}?mode=LEARN">Mode Belajar</a>
+    {% else %}
+      {% if up and up.is_purchased %}
+        <a href="{% url 'start_attempt' package.slug %}?mode=TRYOUT">Mulai Tryout</a>
+        |
+        <a href="{% url 'start_attempt' package.slug %}?mode=LEARN">Mode Belajar</a>
+      {% else %}
+        <p><i>Paket ini berbayar. Silakan beli dulu untuk mulai.</i></p>
+      {% endif %}
+    {% endif %}
+
   {% else %}
     <p>Silakan <a href="/accounts/login/">login</a> untuk mulai.</p>
   {% endif %}
+
+
 
   <br><br>
   <a href="{% url 'package_list' %}">← Kembali</a>

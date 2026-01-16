@@ -21,10 +21,14 @@
   .pill { border:1px solid #ddd; padding:6px 10px; border-radius:5px; display:inline-block; }
 </style>
 
-<h1>Review & Pembahasan</h1>
-<p class="pill"><b>{{ attempt.package.title }}</b> | Skor: {{ attempt.score }}/{{ attempt.max_score }}</p>
-<div class="pill" style="margin-bottom:12px;">
-  Skor Soal Ini: {{ q_score }}/{{ q_max }}
+<div class="topbar" style="font-family: 'Roboto', sans-serif;">
+  <div>
+    <b>Review & Pembahasan</b><br>
+  </div>
+  <p class="pill"><b>{{ attempt.package.title }}</b> | Mode: {{ attempt.mode }} | Skor: {{ attempt.score }}/{{ attempt.max_score }}</p>
+  <div class="pill" style="margin-bottom:12px;">
+    Skor Soal Ini: {{ q_score }}/{{ q_max }}
+  </div>
 </div>
 
 <div class="layout" style="margin-top:12px;">
@@ -42,9 +46,9 @@
   </aside>
 
   <section class="main">
-    <h2 style="margin-top:0;">Soal Nomor {{ idx|add:1 }}</h2>
+    <!-- <h2 style="margin-top:0;">Soal Nomor {{ idx|add:1 }}</h2> -->
 
-    <div style="white-space:pre-line; margin-bottom:12px;">{{ q.stem }}</div>
+    <div style="white-space:pre-line; margin-bottom:12px;">{{ idx|add:1 }}. {{ q.stem }}</div>
 
     {% if q.image %}
       <img src="{{ q.image.url }}" style="max-width:100%; border-radius:10px; border:1px solid #eee; margin-bottom:12px;">

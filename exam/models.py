@@ -166,6 +166,7 @@ class Attempt(models.Model):
 
     mode = models.CharField(max_length=10, choices=Mode.choices, default=Mode.TRYOUT)
     status = models.CharField(max_length=15, choices=Status.choices, default=Status.IN_PROGRESS)
+    last_active_at = models.DateTimeField(null=True, blank=True)
 
     started_at = models.DateTimeField(auto_now_add=True)
     submitted_at = models.DateTimeField(null=True, blank=True)

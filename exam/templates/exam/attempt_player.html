@@ -3,10 +3,12 @@
 
 {% block content %}
 <style>
-  .layout { display:flex; gap:16px; align-items:flex-start; }
-  .sidebar { width:280px; border:1px solid #ddd; padding:12px; border-radius:5px; }
-  .main { flex:1; border:1px solid #ddd; padding:16px; border-radius:5px; }
-
+  .layout { display:flex; gap:10px; align-items:flex-start; }
+  .main { flex:1; border:1px solid #ddd; padding:16px; border-radius:5px; 
+    max-height: calc(100vh - 170px); overflow-y: auto;}
+  /* .sidebar { width:280px; border:1px solid #ddd; padding:12px; border-radius:5px; position: sticky; top: 50px; max-height: calc(100vh - 24px); overflow-y: auto; } */
+  .sidebar { width:280px; border:1px solid #ddd; padding:12px; border-radius:5px; max-height: calc(100vh - 24px); overflow-y: auto; }
+  .topbar { display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; background: #ffffff; z-index: 10; padding-bottom: 5px; border-bottom: 1px solid #eee; margin-bottom: 5px; }
   .grid { display:grid; grid-template-columns: repeat(5, 1fr); gap:1px; }
   .qbtn { display:flex; align-items:center; justify-content:center; height:30px; border-radius:1px; border:1px solid #ccc; text-decoration:none; font-weight:600; }
 
@@ -16,32 +18,51 @@
   .current { background:#0765f3; border-color:#0765f3; color:#ffffff; }    /* biru */
 
   .option { border:1px solid #ddd; padding:12px; border-radius:5px; margin-bottom:10px; }
-  .topbar { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
   .pill { border:1px solid #ddd; padding:6px 10px; border-radius:5px; }
   .actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:14px; }
+
+  @media (max-width: 768px) {
+    .layout { flex-direction: column; }
+    .sidebar { width:100%; position:relative; }
+  }
+
+  button {
+    padding: 8px 12px;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+    background: #fff;
+    cursor: pointer;
+  }
+
+  button.primary {
+    background: #2f6bff;
+    color: #fff;
+    border-color: #2f6bff;
+  }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+
+
 </style>
 
-<div class="topbar">
+<div class="topbar" style="font-family: 'Roboto', sans-serif;">
   <div>
     <b>{{ attempt.package.title }}</b><br>
     <small>Mode: {{ attempt.mode }} | Soal {{ idx|add:1 }} dari {{ counts.total }}</small>
   </div>
   <div class="pill">
-    Waktu tersisa:
-    <b id="timer">{{ time_info.remaining_seconds }}</b> detik
+    Waktu tersisa: <b id="timer">{{ time_info.remaining_seconds }}</b> detik
+  </div>
+  <div>
+    <span id="save-status" style="margin-left:10px; font-weight:normal;"></span>
   </div>
 </div>
 
 <div class="layout">
   <aside class="sidebar">
-    <h3 style="margin-top:0;">Navigasi</h3>
+    <h3 style="margin-top:0; font-family: 'Roboto', sans-serif;">Navigasi</h3>
 
     <div style="font-size:12px; line-height:1.6; margin-bottom:10px;">
-      <!-- <div>🟥 Blank: {{ counts.blank }}</div>
-      <div>🟩 Answered: {{ counts.answered }}</div>
-      <div>🟨 Flagged: {{ counts.flagged }}</div>
-      <div>Total: {{ counts.total }}</div> -->
-      <div>🟥 Blank: {{ counts.blank }} 🟩 Answered: {{ counts.answered }} 🟨 Flagged: {{ counts.flagged }}</div>
+      <div style="font-family: 'Roboto', sans-serif;">🟥Blank: {{ counts.blank }} 🟩Answered: {{ counts.answered }} 🟨Flagged: {{ counts.flagged }}</div>
     </div>
 
     <div class="grid">
@@ -60,12 +81,7 @@
     </div>
     <br>
     <div>
-      <button
-        type="submit"
-        form="answer-form"
-        name="action"
-        value="submit"
-      >
+      <button type="button" onclick="openSubmitModal()" style="width:100%; padding:10px; border-radius:5px;">
         Finish / Submit
       </button>
     </div>
@@ -73,15 +89,15 @@
   </aside>
 
   <section class="main">
-    <h2 style="margin-top:0;">Soal Nomor {{ idx|add:1 }}</h2>
+    <!-- <h2 style="margin-top:0; font-family: 'Roboto', sans-serif;">Soal Nomor {{ idx|add:1 }}</h2> -->
     {% if current_question.section %}
-      <div style="color:#2f6bff; font-weight:600; margin-bottom:10px;">
+      <div style="font-family: 'Roboto', sans-serif; color:#2f6bff; font-weight:600; margin-bottom:10px;">
         {{ current_question.section.title }}
       </div>
     {% endif %}
 
     <div style="margin-bottom:14px;">
-      <div style="white-space:pre-line;">{{ current_question.stem }}</div>
+      <div style="white-space:pre-line; font-family: 'Open Sans', Helvetica, Arial, sans-serif;">{{ idx|add:1 }}. {{ current_question.stem }}</div>
 
       {% if current_question.image %}
         <div style="margin-top:10px;">
@@ -102,7 +118,7 @@
       {% if is_multi %}
         <!-- <input type="hidden" name="action" value="save"> -->
         {% for c in current_question.choices.all %}
-          <label class="option" style="display:block; cursor:pointer;">
+          <label class="option" style="display:block; cursor:pointer; font-family:'Open Sans', sans-serif;">
             <input type="checkbox" name="choice" value="{{ c.id }}"
                    {% if c.id in selected_ids %}checked{% endif %}>
             {{ c.label }}. {{ c.text }}
@@ -111,7 +127,7 @@
       {% else %}
         <!-- <input type="hidden" name="action" value="save"> -->
         {% for c in current_question.choices.all %}
-          <label class="option" style="display:block; cursor:pointer;">
+          <label class="option" style="display:block; cursor:pointer; font-family: 'Open Sans', sans-serif;">
             <input type="radio" name="choice" value="{{ c.id }}"
                    {% if c.id in selected_ids %}checked{% endif %}>
             {{ c.label }}. {{ c.text }}
@@ -119,20 +135,50 @@
         {% endfor %}
       {% endif %}
 
-      <div class="actions">
-        <button type="submit" name="nav" value="prev">← Prev</button>
-        <button type="submit" name="action" value="clear">Clear Answer</button>
-        <button type="submit" name="action" value="toggle_flag">
-            {% if answer_obj.flagged %}Unflag{% else %}Flag question{% endif %}
+      <div class="actions" style="padding-top: 20px;">
+        <button style="margin-right: 75px;" type="submit" name="nav" value="prev" {% if idx == 0 %}disabled{% endif %}> ← Prev</button>
+        <button type="submit" name="action" value="clear"><span>&#128465;</span> Clear Answer</button>
+        <button type="submit" name="action" value="toggle_flag" class="btn-flag" style="min-width: 125px;">
+            {% if answer_obj.flagged %}
+                <span>🚩</span> Unflag
+            {% else %}
+                <span>🚩</span> Flag Question
+            {% endif %}
         </button>
-        <button type="submit" name="nav" value="next">Next →</button>
+        <button style="margin-left: 75px;"type="submit" name="nav" value="next" {% if idx == counts.total|add:"-1" %}disabled{% endif %}>Next →</button>
 
         <!-- <button type="submit" name="action" value="submit">Submit</button> -->
       </div>
       
     </form>
+    
+    <!-- Submit Modal -->
+    <div id="submit-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:999;">
+      <div style="background:#fff; max-width:420px; margin:10% auto; padding:20px; border-radius:5px;">
+        <h2>Konfirmasi Submit</h2>
+        <ul>
+          <li>Total: {{ counts.total }}</li>
+          <li>Sudah dijawab: {{ counts.answered }}</li>
+          <li>Kosong: {{ counts.blank }}</li>
+          <li>Ragu-ragu: {{ counts.flagged }}</li>
+        </ul>
+
+        <div style="display:flex; gap:10px; margin-top:16px;">
+          <form method="post" action="{% url 'attempt_submit' attempt.id %}">
+            {% csrf_token %}
+            <button type="submit">Submit Sekarang</button>
+          </form>
+          <button type="button" onclick="closeSubmitModal()">Batal</button>
+        </div>
+      </div>
+    </div>
+
   </section>
+
 </div>
+
+
+<!-- Scripts -->
 <script>
   (function(){
     const form = document.getElementById("answer-form");
@@ -178,4 +224,155 @@
     }, 1000);
   })();
 </script>
+
+<script>
+  (function(){
+    const timerEl = document.getElementById("timer");
+    let s = parseInt(timerEl.textContent || "0", 10);
+
+    const hbUrl = "{% url 'attempt_heartbeat' attempt.id %}";
+    const form = document.getElementById("answer-form");
+    const csrftoken = form.querySelector('input[name="csrfmiddlewaretoken"]').value;
+
+    // visual countdown setiap 1 detik (UI)
+    setInterval(() => {
+      if (s > 0) s -= 1;
+      timerEl.textContent = String(s);
+    }, 1000);
+
+    // heartbeat ke server tiap 5 detik (source of truth)
+    async function heartbeat(){
+      try{
+        const res = await fetch(hbUrl, {
+          method: "POST",
+          headers: { "X-CSRFToken": csrftoken },
+          body: new FormData() // kosong
+        });
+        const data = await res.json();
+        if (!data.ok) return;
+
+        s = parseInt(data.remaining_seconds, 10);
+
+        // TRYOUT: kalau expired, arahkan ke submit confirm
+        if (data.mode === "TRYOUT" && data.expired) {
+          if (window.__disableTryoutUnloadWarning) window.__disableTryoutUnloadWarning();
+            window.location.href = "{% url 'attempt_submit' attempt.id %}";
+        }
+
+        // LEARN: kalau expired (optional) -> bisa juga arahkan submit,
+        // tapi biasanya mode belajar tidak auto-submit. Kamu bisa pilih:
+        // if (data.mode === "LEARN" && data.expired) window.location.href = "{% url 'attempt_submit' attempt.id %}";
+      } catch(e){
+        // ignore
+      }
+    }
+
+    setInterval(heartbeat, 5000);
+  })();
+</script>
+
+<script>
+  (function(){
+    const form = document.getElementById("answer-form");
+    if(!form) return;
+
+    const idx = "{{ idx }}";
+    const url = "{% url 'attempt_autosave' attempt.id %}";
+    const csrftoken = form.querySelector('input[name="csrfmiddlewaretoken"]').value;
+
+    const statusEl = document.getElementById("save-status");
+
+    let t = null;
+
+    async function autosave(){
+      try{
+        if(statusEl) statusEl.textContent = "Menyimpan...";
+        const fd = new FormData(form);
+        fd.set("idx", idx);
+
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "X-CSRFToken": csrftoken },
+          body: fd,
+        });
+        const data = await res.json();
+
+        if(data && data.expired){
+          // tryout habis -> paksa ke submit
+        if (window.__disableTryoutUnloadWarning) window.__disableTryoutUnloadWarning();
+          window.location.href = "{% url 'attempt_submit' attempt.id %}";
+          return;
+        }
+
+        if(statusEl) statusEl.textContent = "Tersimpan ✅";
+        setTimeout(() => { if(statusEl) statusEl.textContent = ""; }, 1200);
+      }catch(e){
+        if(statusEl) statusEl.textContent = "Gagal menyimpan (cek koneksi)";
+      }
+    }
+
+    form.addEventListener("change", (e) => {
+      if(e.target && e.target.name === "choice"){
+        clearTimeout(t);
+        t = setTimeout(autosave, 200); // debounce 200ms
+      }
+    });
+  })();
+</script>
+
+<script>
+  (function(){
+    const mode = "{{ attempt.mode }}";
+    if (mode !== "TRYOUT") return;
+
+    let allowNav = false;
+
+    function beforeUnloadHandler(e){
+      if (allowNav) return;
+      e.preventDefault();
+      e.returnValue = "";
+    }
+
+    window.addEventListener("beforeunload", beforeUnloadHandler);
+
+    // Anggap semua submit form di halaman ini sebagai navigasi internal
+    document.addEventListener("submit", function(){
+      allowNav = true;
+      window.removeEventListener("beforeunload", beforeUnloadHandler);
+    }, true);
+
+    // Anggap semua klik link internal (same-origin) sebagai navigasi internal
+    document.addEventListener("click", function(e){
+      const a = e.target.closest && e.target.closest("a");
+      if (!a) return;
+
+      // only same-origin navigations
+      try{
+        const url = new URL(a.href, window.location.href);
+        if (url.origin === window.location.origin) {
+          allowNav = true;
+          window.removeEventListener("beforeunload", beforeUnloadHandler);
+        }
+      }catch(_){}
+    }, true);
+
+    // Expose helper utk redirect via JS (timer expired dll)
+    window.__disableTryoutUnloadWarning = function(){
+      allowNav = true;
+      window.removeEventListener("beforeunload", beforeUnloadHandler);
+    };
+  })();
+</script>
+
+<script>
+  function openSubmitModal(){
+    if (window.__disableTryoutUnloadWarning) window.__disableTryoutUnloadWarning();
+    document.getElementById("submit-modal").style.display = "block";
+  }
+  function closeSubmitModal(){
+    document.getElementById("submit-modal").style.display = "none";
+  }
+</script>
+
+
 {% endblock %}

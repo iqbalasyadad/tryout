@@ -1,0 +1,80 @@
+{% extends "core/base.html" %}
+{% block title %}Dashboard | Tryout{% endblock %}
+{% block content %}
+  <h1>Dashboard</h1>
+
+  <h2>Attempt yang masih berjalan</h2>
+  <ul>
+    {% for a in in_progress %}
+      <li>
+        <b>{{ a.package.title }}</b> ({{ a.mode }})
+        - <a href="{% url 'attempt_player' a.id %}">Lanjutkan</a>
+      </li>
+    {% empty %}
+      <li>Tidak ada attempt yang sedang berjalan.</li>
+    {% endfor %}
+  </ul>
+
+  <hr>
+
+  <h2>Paket Favorit</h2>
+  <ul>
+    {% for x in favorites %}
+      <li>
+        <a href="{% url 'package_detail' x.package.slug %}">{{ x.package.title }}</a>
+        - {{ x.package.category.name }}
+      </li>
+    {% empty %}
+      <li>Belum ada favorit.</li>
+    {% endfor %}
+  </ul>
+
+  <h2>Paket Dibeli</h2>
+  <ul>
+    {% for x in purchased %}
+      <li>
+        <a href="{% url 'package_detail' x.package.slug %}">{{ x.package.title }}</a>
+        - {{ x.package.category.name }}
+      </li>
+    {% empty %}
+      <li>Belum ada paket dibeli.</li>
+    {% endfor %}
+  </ul>
+
+  <hr>
+
+  <h2>Riwayat Attempt (50 terbaru)</h2>
+  <table border="1" cellpadding="8" cellspacing="0">
+    <thead>
+      <tr>
+        <th>Tanggal</th>
+        <th>Paket</th>
+        <th>Mode</th>
+        <th>Status</th>
+        <th>Skor</th>
+        <th>Aksi</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for a in attempts %}
+        <tr>
+          <td>{{ a.created_at }}</td>
+          <td>{{ a.package.title }}</td>
+          <td>{{ a.mode }}</td>
+          <td>{{ a.status }}</td>
+          <td>{{ a.score }} / {{ a.max_score }}</td>
+          <td>
+            {% if a.status == "IN_PROGRESS" %}
+              <a href="{% url 'attempt_player' a.id %}">Lanjutkan</a>
+            {% else %}
+              <a href="{% url 'attempt_result' a.id %}">Hasil</a> |
+              <a href="{% url 'attempt_review' a.id %}">Review</a>
+            {% endif %}
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="6">Belum ada riwayat.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

@@ -4,12 +4,16 @@ from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
-from .models import Attempt, AttemptAnswer, Choice, Package, Question
+from .models import Attempt, AttemptAnswer, Choice, Package, Question, UserPackage
 from .services import get_remaining_seconds
 
 from .scoring import score_attempt
 from .models import Question
 from django.http import JsonResponse
+
+from django.contrib import messages
+from django.urls import reverse
+
 
 def package_list(request):
     packages = Package.objects.filter(is_active=True).select_related("category")
@@ -19,7 +23,16 @@ def package_list(request):
 def package_detail(request, slug):
     package = get_object_or_404(Package.objects.select_related("category"), slug=slug, is_active=True)
     q_count = package.questions.filter(is_active=True).count()
-    return render(request, "exam/package_detail.html", {"package": package, "q_count": q_count})
+
+    up = None
+    if request.user.is_authenticated:
+        up = UserPackage.objects.filter(user=request.user, package=package).first()
+
+    return render(request, "exam/package_detail.html", {
+        "package": package,
+        "q_count": q_count,
+        "up": up,
+    })
 
 
 @login_required
@@ -91,6 +104,10 @@ def attempt_player(request, attempt_id: int):
 
     # timer info
     time_info = get_remaining_seconds(attempt)
+
+    if attempt.mode == Attempt.Mode.LEARN and attempt.last_active_at is None:
+        attempt.last_active_at = timezone.now()
+        attempt.save(update_fields=["last_active_at"])
 
     # Auto-submit jika TRYOUT sudah habis
     if attempt.mode == Attempt.Mode.TRYOUT and time_info.is_expired:
@@ -386,6 +403,17 @@ def attempt_autosave(request, attempt_id: int):
     if attempt.status != Attempt.Status.IN_PROGRESS:
         return JsonResponse({"ok": False, "error": "Attempt not active"}, status=400)
 
+    # Strict tryout: kalau habis, kasih sinyal expired
+    time_info = get_remaining_seconds(attempt)
+    if attempt.mode == Attempt.Mode.TRYOUT and time_info.is_expired:
+        return JsonResponse({"ok": False, "expired": True}, status=200)
+
+    # idx soal yang aktif dikirim oleh client
+    try:
+        idx = int(request.POST.get("idx", attempt.current_index))
+    except ValueError:
+        idx = attempt.current_index
+
     questions = list(
         Question.objects.filter(package=attempt.package, is_active=True)
         .order_by("order_index", "id")
@@ -393,12 +421,7 @@ def attempt_autosave(request, attempt_id: int):
     if not questions:
         return JsonResponse({"ok": False, "error": "No questions"}, status=400)
 
-    # index soal aktif (kirim dari client)
-    try:
-        idx = int(request.POST.get("idx", attempt.current_index))
-    except ValueError:
-        idx = attempt.current_index
-    idx = max(0, min(idx, len(questions) - 1))
+    idx = max(0, min(len(questions) - 1, idx))
     q = questions[idx]
 
     answer_obj, _ = AttemptAnswer.objects.get_or_create(attempt=attempt, question=q)
@@ -414,4 +437,70 @@ def attempt_autosave(request, attempt_id: int):
             answer_obj.answered_at = None
         answer_obj.save()
 
-    return JsonResponse({"ok": True})
+    return JsonResponse({"ok": True, "saved": True})
+
+
+@login_required
+def toggle_favorite(request, slug):
+    if request.method != "POST":
+        return redirect("package_detail", slug=slug)
+
+    package = get_object_or_404(Package, slug=slug, is_active=True)
+    up, _ = UserPackage.objects.get_or_create(user=request.user, package=package)
+    up.is_favorite = not up.is_favorite
+    up.save(update_fields=["is_favorite"])
+
+    return redirect("package_detail", slug=slug)
+
+
+@login_required
+def purchase_package(request, slug):
+    if request.method != "POST":
+        return redirect("package_detail", slug=slug)
+
+    package = get_object_or_404(Package, slug=slug, is_active=True)
+    up, _ = UserPackage.objects.get_or_create(user=request.user, package=package)
+
+    # MVP: langsung jadi purchased
+    up.is_purchased = True
+    up.save(update_fields=["is_purchased"])
+
+    return redirect("package_detail", slug=slug)
+
+
+@login_required
+def attempt_heartbeat(request, attempt_id: int):
+    if request.method != "POST":
+        return JsonResponse({"ok": False, "error": "POST only"}, status=405)
+
+    attempt = get_object_or_404(Attempt, id=attempt_id, user=request.user)
+
+    if attempt.status != Attempt.Status.IN_PROGRESS:
+        return JsonResponse({"ok": False, "error": "Attempt not active"}, status=400)
+
+    now = timezone.now()
+
+    # Update elapsed_seconds khusus mode LEARN
+    if attempt.mode == Attempt.Mode.LEARN:
+        # Jika last_active_at belum ada, set dulu (tidak menambah elapsed)
+        if attempt.last_active_at is None:
+            attempt.last_active_at = now
+            attempt.save(update_fields=["last_active_at"])
+        else:
+            delta = int((now - attempt.last_active_at).total_seconds())
+            # Hindari lonjakan besar (mis. tab tidur 2 jam) -> anggap pause
+            # Jika user benar-benar idle lama, kita tidak menambah waktu.
+            if 0 <= delta <= 30:
+                attempt.elapsed_seconds = min(attempt.duration_seconds, attempt.elapsed_seconds + delta)
+            attempt.last_active_at = now
+            attempt.save(update_fields=["elapsed_seconds", "last_active_at"])
+
+    # Untuk TRYOUT, kita tidak update elapsed_seconds; timer dihitung dari started_at
+
+    time_info = get_remaining_seconds(attempt)
+    return JsonResponse({
+        "ok": True,
+        "remaining_seconds": time_info.remaining_seconds,
+        "expired": time_info.is_expired,
+        "mode": attempt.mode,
+    })
