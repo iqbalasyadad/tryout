@@ -2,9 +2,10 @@
 {% block title %}Review | {{ attempt.package.title }}{% endblock %}
 {% block content %}
 <style>
+  *, *::before, *::after { box-sizing: border-box; }
   .layout { display:flex; gap:16px; align-items:flex-start; }
-  .sidebar { width:280px; border:1px solid #ddd; padding:12px; border-radius:5px; }
-  .main { flex:1; border:1px solid #ddd; padding:16px; border-radius:5px; }
+  .sidebar { width:280px; border:1px solid #ddd; padding:12px; border-radius:5px; max-height: calc(100vh - 24px); overflow-y: auto; }
+  .main { flex:1; border:1px solid #ddd; padding:16px; border-radius:5px; font-family: 'Open Sans', Helvetica, Arial, sans-serif;}
 
   .grid { display:grid; grid-template-columns: repeat(5, 1fr); gap:1px; }
   .qbtn { display:flex; align-items:center; justify-content:center; height:30px; border-radius:1px; border:1px solid #ccc; text-decoration:none; font-weight:600; }
@@ -19,8 +20,18 @@
   .opt-correct { border-color:#4bd37b; background:#e9fff1; }
   .opt-wrong { border-color:#ff8080; background:#ffefef; }
   .pill { border:1px solid #ddd; padding:6px 10px; border-radius:5px; display:inline-block; }
+
+  @media (max-width: 768px) {
+    .layout { flex-direction: column; }
+    .sidebar {
+      width: 100%;
+      padding: 12px;
+    }
+  }
+
 </style>
 
+<!-- TOP BAR -->
 <div class="topbar" style="font-family: 'Roboto', sans-serif;">
   <div>
     <b>Review & Pembahasan</b><br>
@@ -32,6 +43,8 @@
 </div>
 
 <div class="layout" style="margin-top:12px;">
+
+  <!-- SIDEBAR -->
   <aside class="sidebar">
     <h3 style="margin-top:0;">Navigasi</h3>
     <div class="grid">
@@ -39,12 +52,12 @@
         <a class="qbtn {{ g.status }}" href="?q={{ g.idx }}">{{ g.num }}</a>
       {% endfor %}
     </div>
-
     <p style="margin-top:12px;">
       <a href="{% url 'attempt_result' attempt.id %}">← Kembali ke Hasil</a>
     </p>
   </aside>
 
+  <!-- MAIN -->
   <section class="main">
     <!-- <h2 style="margin-top:0;">Soal Nomor {{ idx|add:1 }}</h2> -->
 
@@ -58,7 +71,7 @@
       <audio controls src="{{ q.audio.url }}" style="width:100%; margin-bottom:12px;"></audio>
     {% endif %}
 
-    <h3>Jawaban</h3>
+    <h3>Answer</h3>
 
     {% if q.answer_type == "WEIGHTED" %}
       {% for c in choices_view %}
@@ -69,12 +82,12 @@
           </span>
 
           {% if c.is_selected %}
-            <span style="margin-left:8px;">🎯 Dipilih</span>
+            <span style="margin-left:8px;">🎯</span>
           {% endif %}
 
           {# opsional: tampilkan "Kunci/Ideal" kalau kamu memang pakai is_correct sebagai opsi ideal #}
           {% if c.is_correct %}
-            <span style="margin-left:8px;">⭐ Ideal</span>
+            <span style="margin-left:8px;">⭐</span>
           {% endif %}
         </div>
       {% endfor %}
@@ -87,12 +100,12 @@
           {{ c.label }}. {{ c.text }}
 
           {% if c.is_correct and c.is_selected %}
-            <span style="margin-left:8px;">✅ Benar</span>
-            <span style="margin-left:8px;">🎯 Pilihan kamu</span>
+            <span style="margin-left:8px;">✅</span>
+            <span style="margin-left:8px;">🎯</span>
           {% elif c.is_correct %}
-            <span style="margin-left:8px;">✅ Benar</span>
+            <span style="margin-left:8px;">✅</span>
           {% elif c.is_selected %}
-            <span style="margin-left:8px;">❌ Pilihan kamu</span>
+            <span style="margin-left:8px;">❌</span>
           {% endif %}
         </div>
       {% endfor %}
@@ -100,11 +113,11 @@
 
 
 
-    <h3>Pembahasan</h3>
+    <h3>Explanation</h3>
     {% if q.explanation %}
       <div style="white-space:pre-line;">{{ q.explanation }}</div>
     {% else %}
-      <i>Belum ada pembahasan untuk soal ini.</i>
+      <i>No explanation yet</i>
     {% endif %}
 
     <div style="display:flex; gap:10px; margin-top:14px;">

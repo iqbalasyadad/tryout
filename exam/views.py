@@ -14,6 +14,16 @@ from django.http import JsonResponse
 from django.contrib import messages
 from django.urls import reverse
 
+def _require_package_access(request, package):
+    """
+    Return redirect response if user doesn't have access.
+    Return None if access is allowed.
+    """
+    if package.is_paid:
+        up = UserPackage.objects.filter(user=request.user, package=package).first()
+        if not up or not up.is_purchased:
+            return redirect("package_detail", slug=package.slug)
+    return None
 
 def package_list(request):
     packages = Package.objects.filter(is_active=True).select_related("category")
@@ -38,6 +48,12 @@ def package_detail(request, slug):
 @login_required
 def start_attempt(request, slug):
     package = get_object_or_404(Package, slug=slug, is_active=True)
+    # 🔒 Access control
+    guard = _require_package_access(request, package)
+    if guard:
+        return guard
+
+
     mode = request.GET.get("mode", Attempt.Mode.TRYOUT)
     if mode not in (Attempt.Mode.TRYOUT, Attempt.Mode.LEARN):
         mode = Attempt.Mode.TRYOUT
@@ -90,6 +106,11 @@ def start_attempt(request, slug):
 def attempt_player(request, attempt_id: int):
     attempt = get_object_or_404(Attempt, id=attempt_id, user=request.user)
 
+    # 🔒 Access control
+    guard = _require_package_access(request, attempt.package)
+    if guard:
+        return guard
+    
     if attempt.status != Attempt.Status.IN_PROGRESS:
         return redirect("attempt_result", attempt_id=attempt.id)
 
@@ -219,6 +240,21 @@ def attempt_player(request, attempt_id: int):
     selected_ids = set(answer_obj.choices.values_list("id", flat=True))
     is_multi = current_question.answer_type in (Question.AnswerType.MULTI,)
 
+    # Build choices_view (khusus LEARN) supaya template bisa highlight tanpa operasi "in"
+    choices_view = None
+    if attempt.mode == Attempt.Mode.LEARN:
+        correct_ids = set(current_question.choices.filter(is_correct=True).values_list("id", flat=True))
+        choices_view = []
+        for c in current_question.choices.all():
+            choices_view.append({
+                "id": c.id,
+                "label": c.label,
+                "text": c.text,
+                "points": c.points,
+                "is_selected": c.id in selected_ids,
+                "is_correct": c.id in correct_ids,   # untuk non-weighted
+            })
+
     return render(
         request,
         "exam/attempt_player.html",
@@ -233,6 +269,7 @@ def attempt_player(request, attempt_id: int):
             "is_multi": is_multi,
             "answer_obj": answer_obj,
             "time_info": time_info,
+            "choices_view": choices_view,
         },
     )
 
@@ -240,6 +277,12 @@ def attempt_player(request, attempt_id: int):
 @login_required
 def attempt_submit(request, attempt_id: int):
     attempt = get_object_or_404(Attempt, id=attempt_id, user=request.user)
+
+    # 🔒 Access control
+    guard = _require_package_access(request, attempt.package)
+    if guard:
+        return guard
+    
     if attempt.status != Attempt.Status.IN_PROGRESS:
         return redirect("attempt_result", attempt_id=attempt.id)
 
@@ -287,6 +330,11 @@ def attempt_submit(request, attempt_id: int):
 def attempt_result(request, attempt_id: int):
     attempt = get_object_or_404(Attempt, id=attempt_id, user=request.user)
 
+    # 🔒 Access control
+    guard = _require_package_access(request, attempt.package)
+    if guard:
+        return guard
+
     questions = list(Question.objects.filter(package=attempt.package, is_active=True).order_by("order_index", "id"))
     answers = AttemptAnswer.objects.filter(attempt=attempt, question__in=questions).prefetch_related("choices")
 
@@ -318,6 +366,11 @@ def attempt_result(request, attempt_id: int):
 def attempt_review(request, attempt_id: int):
     attempt = get_object_or_404(Attempt, id=attempt_id, user=request.user)
 
+    # 🔒 Access control
+    guard = _require_package_access(request, attempt.package)
+    if guard:
+        return guard
+    
     questions = list(
         Question.objects.filter(package=attempt.package, is_active=True)
         .prefetch_related("choices")
@@ -400,6 +453,12 @@ def attempt_autosave(request, attempt_id: int):
         return JsonResponse({"ok": False, "error": "POST only"}, status=405)
 
     attempt = get_object_or_404(Attempt, id=attempt_id, user=request.user)
+
+    # 🔒 Access control
+    guard = _require_package_access(request, attempt.package)
+    if guard:
+        return JsonResponse({"ok": False, "forbidden": True}, status=403)
+    
     if attempt.status != Attempt.Status.IN_PROGRESS:
         return JsonResponse({"ok": False, "error": "Attempt not active"}, status=400)
 
@@ -475,6 +534,11 @@ def attempt_heartbeat(request, attempt_id: int):
 
     attempt = get_object_or_404(Attempt, id=attempt_id, user=request.user)
 
+    # 🔒 Access control
+    guard = _require_package_access(request, attempt.package)
+    if guard:
+        return JsonResponse({"ok": False, "forbidden": True}, status=403)
+    
     if attempt.status != Attempt.Status.IN_PROGRESS:
         return JsonResponse({"ok": False, "error": "Attempt not active"}, status=400)
 

@@ -3,63 +3,240 @@
 
 {% block content %}
 <style>
-  .layout { display:flex; gap:10px; align-items:flex-start; }
-  .main { flex:1; border:1px solid #ddd; padding:16px; border-radius:5px; 
-    max-height: calc(100vh - 170px); overflow-y: auto;}
-  /* .sidebar { width:280px; border:1px solid #ddd; padding:12px; border-radius:5px; position: sticky; top: 50px; max-height: calc(100vh - 24px); overflow-y: auto; } */
-  .sidebar { width:280px; border:1px solid #ddd; padding:12px; border-radius:5px; max-height: calc(100vh - 24px); overflow-y: auto; }
-  .topbar { display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; background: #ffffff; z-index: 10; padding-bottom: 5px; border-bottom: 1px solid #eee; margin-bottom: 5px; }
-  .grid { display:grid; grid-template-columns: repeat(5, 1fr); gap:1px; }
-  .qbtn { display:flex; align-items:center; justify-content:center; height:30px; border-radius:1px; border:1px solid #ccc; text-decoration:none; font-weight:600; }
-
-  .blank { background:#ff0000; border-color:#ff0000; color:#ffffff; }       /* merah */
-  .answered { background:#02c248; border-color:#02c248; color:#ffffff; }   /* hijau */
-  .flagged { background:#e7b900; border-color:#e7b900; color:#ffffff; }    /* kuning */
-  .current { background:#0765f3; border-color:#0765f3; color:#ffffff; }    /* biru */
-
-  .option { border:1px solid #ddd; padding:12px; border-radius:5px; margin-bottom:10px; }
-  .pill { border:1px solid #ddd; padding:6px 10px; border-radius:5px; }
-  .actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:14px; }
-
-  @media (max-width: 768px) {
-    .layout { flex-direction: column; }
-    .sidebar { width:100%; position:relative; }
+  *, *::before, *::after { box-sizing: border-box; }
+  
+  .layout { 
+    display: flex; 
+    gap: 10px; 
+    align-items: flex-start; 
+  }
+  
+  .main { 
+    flex: 1; 
+    border: 1px solid #ddd; 
+    padding: 16px; 
+    border-radius: 5px; 
+    max-height: calc(100vh - 95px); 
+    overflow-y: auto; 
+    font-family: 'Open Sans', Helvetica, Arial, sans-serif;
+  }
+  
+  .sidebar { 
+    width: 280px; 
+    border: 1px solid #ddd; 
+    padding: 12px; 
+    border-radius: 5px; 
+    max-height: calc(100vh - 24px); 
+    overflow-y: auto; 
+  }
+  
+  .topbar { 
+    display: flex; 
+    align-items: center; 
+    justify-content: space-between; 
+    position: sticky; 
+    top: 0; 
+    background: #ffffff; 
+    z-index: 10; 
+    padding: 5px 0; 
+    border-bottom: 1px solid #eee; 
+    margin-bottom: 5px; 
+  }
+  
+  .grid { 
+    display: grid; 
+    grid-template-columns: repeat(5, 1fr); 
+    gap: 4px; 
+  }
+  
+  .qbtn { 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    height: 36px; 
+    border-radius: 4px; 
+    border: 1px solid #ccc; 
+    text-decoration: none; 
+    font-weight: 600; 
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+    cursor: pointer;
+  }
+  
+  .qbtn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+  
+  .qbtn:active:not(:disabled) {
+    transform: translateY(0);
   }
 
-  button {
+  .blank-qbtn { background: #ff0000; border-color: #ff0000; color: #ffffff; }
+  .answered-qbtn { background: #02c248; border-color: #02c248; color: #ffffff; }
+  .flagged-qbtn { background: #e7b900; border-color: #e7b900; color: #ffffff; }
+  .current-qbtn { background: #0765f3; border-color: #0765f3; color: #ffffff; }
+
+  .option { 
+    border: 1px solid #ddd; 
+    padding: 12px; 
+    border-radius: 5px; 
+    margin-bottom: 10px;
+    transition: all 0.2s ease;
+    position: relative;
+  }
+  
+  .option:hover {
+    background: #f8f8f8;
+    border-color: #bbb;
+  }
+  
+  .pill { 
+    border: 1px solid #ddd; 
+    padding: 6px 10px; 
+    border-radius: 5px; 
+  }
+  
+  .actions { 
+    display: flex; 
+    gap: 10px; 
+    flex-wrap: wrap; 
+    margin-top: 14px; 
+  }
+
+  .attempt-player-action-btn {
     padding: 8px 12px;
     border-radius: 5px;
     border: 1px solid #ddd;
     background: #fff;
     cursor: pointer;
+    transition: all 0.15s ease;
+    font-size: 14px;
   }
-
-  button.primary {
-    background: #2f6bff;
+  
+  .attempt-player-action-btn:hover:not(:disabled) {
+    background-color: #f1f1f1;
+    border-color: #bbbbbb;
+  }
+  
+  .attempt-player-action-btn:active:not(:disabled) {
+    background-color: #dddddd;
+  }
+  
+  .attempt-player-action-btn:disabled { 
+    opacity: 0.5; 
+    cursor: not-allowed; 
+  }
+  
+  .attempt-player-action-btn.flagged {
+    background-color: #ffe448;
+    color: #000;
+  }
+  
+  .attempt-player-action-btn.primary {
+    background: #0765f3;
     color: #fff;
-    border-color: #2f6bff;
+    border-color: #0765f3;
   }
-  button:disabled { opacity: .5; cursor: not-allowed; }
 
+  .attempt-player-action-btn.primary:hover:not(:disabled) {
+    background: #0551d8;
+  }
 
+  /* Reveal states - ALWAYS show correct answer in green */
+  .reveal .opt-correct { 
+    border-color: #4bd37b !important; 
+    background: #e9fff1 !important; 
+  }
+  
+  /* Show wrong selected answer in red */
+  .reveal .opt-wrong { 
+    border-color: #ff8080 !important; 
+    background: #ffefef !important; 
+  }
+  
+  .tag { 
+    margin-left: 8px; 
+    font-size: 12px; 
+    padding: 2px 8px; 
+    border: 1px solid #ddd; 
+    border-radius: 999px; 
+  }
+  
+  /* Hide tags until reveal */
+  .reveal-only { 
+    display: none; 
+  }
+  
+  /* Show all tags when revealed */
+  .reveal .reveal-only { 
+    display: inline-block; 
+  }
+
+  /* Save status indicator */
+  .save-status {
+    font-size: 13px;
+    font-weight: normal;
+    transition: color 0.3s ease;
+  }
+  
+  .save-status.saving { color: #666; }
+  .save-status.saved { color: #02c248; }
+  .save-status.error { color: #ff0000; }
+
+  /* Modal */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 999;
+    animation: fadeIn 0.2s ease;
+  }
+  
+  .modal-overlay.show {
+    display: block;
+  }
+  
+  .modal-content {
+    background: #fff;
+    max-width: 420px;
+    margin: 10% auto;
+    padding: 24px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .layout { flex-direction: column; }
+    .sidebar { width: 100%; }
+    .grid { grid-template-columns: repeat(10, 1fr); gap: 3px; }
+    .qbtn { height: 32px; font-size: 13px; }
+    .actions { justify-content: center; }
+  }
 </style>
 
 <div class="topbar" style="font-family: 'Roboto', sans-serif;">
   <div>
-    <b>{{ attempt.package.title }}</b><br>
-    <small>Mode: {{ attempt.mode }} | Soal {{ idx|add:1 }} dari {{ counts.total }}</small>
+    <b>{{ attempt.package.title }}</b> <small>Mode: {{ attempt.mode }} | Question {{ idx|add:1 }}/{{ counts.total }}</small>
   </div>
-  <div class="pill">
-    Waktu tersisa: <b id="timer">{{ time_info.remaining_seconds }}</b> detik
-  </div>
-  <div>
+  <div style="width:150px;">
     <span id="save-status" style="margin-left:10px; font-weight:normal;"></span>
   </div>
+  <div class="pill">
+    Time Left: <b id="timer">{{ time_info.remaining_seconds }}</b> s
+  </div>
+
 </div>
 
 <div class="layout">
   <aside class="sidebar">
-    <h3 style="margin-top:0; font-family: 'Roboto', sans-serif;">Navigasi</h3>
+    <h3 style="margin-top:0; font-family: 'Roboto', sans-serif;">Navigation</h3>
 
     <div style="font-size:12px; line-height:1.6; margin-bottom:10px;">
       <div style="font-family: 'Roboto', sans-serif;">🟥Blank: {{ counts.blank }} 🟩Answered: {{ counts.answered }} 🟨Flagged: {{ counts.flagged }}</div>
@@ -70,7 +247,7 @@
         <button
           type="submit"
           form="answer-form"
-          class="qbtn {{ g.status }}"
+          class="qbtn {{ g.status }}-qbtn"
           name="jump"
           value="{{ g.idx }}"
           style="cursor:pointer;"
@@ -81,9 +258,15 @@
     </div>
     <br>
     <div>
-      <button type="button" onclick="openSubmitModal()" style="width:100%; padding:10px; border-radius:5px;">
-        Finish / Submit
+      <button 
+        class="attempt-player-action-btn primary" 
+        type="button" 
+        onclick="openSubmitModal()"
+        style="width:100%; padding:10px; border-radius:5px;"
+      >
+        Finish Attempt
       </button>
+
     </div>
 
   </aside>
@@ -115,39 +298,119 @@
     <form method="post" id="answer-form">
       {% csrf_token %}
 
-      {% if is_multi %}
-        <!-- <input type="hidden" name="action" value="save"> -->
-        {% for c in current_question.choices.all %}
-          <label class="option" style="display:block; cursor:pointer; font-family:'Open Sans', sans-serif;">
-            <input type="checkbox" name="choice" value="{{ c.id }}"
-                   {% if c.id in selected_ids %}checked{% endif %}>
-            {{ c.label }}. {{ c.text }}
-          </label>
-        {% endfor %}
-      {% else %}
-        <!-- <input type="hidden" name="action" value="save"> -->
-        {% for c in current_question.choices.all %}
-          <label class="option" style="display:block; cursor:pointer; font-family: 'Open Sans', sans-serif;">
-            <input type="radio" name="choice" value="{{ c.id }}"
-                   {% if c.id in selected_ids %}checked{% endif %}>
-            {{ c.label }}. {{ c.text }}
-          </label>
-        {% endfor %}
-      {% endif %}
 
-      <div class="actions" style="padding-top: 20px;">
-        <button style="margin-right: 75px;" type="submit" name="nav" value="prev" {% if idx == 0 %}disabled{% endif %}> ← Prev</button>
-        <button type="submit" name="action" value="clear"><span>&#128465;</span> Clear Answer</button>
-        <button type="submit" name="action" value="toggle_flag" class="btn-flag" style="min-width: 125px;">
-            {% if answer_obj.flagged %}
-                <span>🚩</span> Unflag
+      <div id="options-wrap">
+        {% if attempt.mode == "LEARN" %}
+          {% for c in choices_view %}
+            <label class="option"
+                  data-correct="{% if c.is_correct %}1{% else %}0{% endif %}"
+                  style="display:block; cursor:pointer;">
+
+              {% if current_question.answer_type == "MULTI" %}
+                <input type="checkbox" name="choice" value="{{ c.id }}" {% if c.is_selected %}checked{% endif %}>
+              {% else %}
+                <input type="radio" name="choice" value="{{ c.id }}" {% if c.is_selected %}checked{% endif %}>
+              {% endif %}
+
+              <b>{{ c.label }}</b> {{ c.text }}
+
+              <!-- Badge evaluasi: default hidden -->
+              {% if current_question.answer_type != "WEIGHTED" %}
+                <span class="tag correct-badge" style="display:none;">✅</span>
+                <span class="tag wrong-badge" style="display:none;">❌</span>
+              {% else %}
+                <span class="tag point-badge" style="display:none;">({{ c.points }} poin)</span>
+                {% if c.is_correct %}
+                  <span class="tag ideal-badge" style="display:none;">⭐</span>
+                {% endif %}
+              {% endif %}
+            </label>
+          {% endfor %}
+        {% else %}
+
+          <!-- TRYOUT: versi lama -->
+          {% if is_multi %}
+            {% for c in current_question.choices.all %}
+              <label class="option" style="display:block; cursor:pointer;">
+                <input type="checkbox" name="choice" value="{{ c.id }}"
+                      {% if c.id in selected_ids %}checked{% endif %}>
+                <b>{{ c.label }}</b> {{ c.text }}
+              </label>
+            {% endfor %}
+          {% else %}
+            {% for c in current_question.choices.all %}
+              <label class="option" style="display:block; cursor:pointer;">
+                <input type="radio" name="choice" value="{{ c.id }}"
+                      {% if c.id in selected_ids %}checked{% endif %}>
+                <b>{{ c.label }}</b> {{ c.text }}
+              </label>
+            {% endfor %}
+          {% endif %}
+        {% endif %}
+      </div>
+
+
+
+      <!-- EXPLANATION ANSWER BUTTON -->
+      {% if attempt.mode == "LEARN" %}
+        <div style="margin-top: 16px;">
+          <button class="attempt-player-action-btn" type="button" onclick="toggleExplanation()" id="toggle-expl-btn">
+            Show Answer
+          </button>
+
+          <div id="explanation-box" style="display:none; margin-top:12px; padding:12px; border:1px solid #ddd; border-radius:8px; background:#fafafa;">
+            {% if current_question.explanation %}
+              <div style="white-space: pre-line;">{{ current_question.explanation }}</div>
             {% else %}
-                <span>🚩</span> Flag Question
+              <i>No explanation yet</i>
             {% endif %}
+          </div>
+        </div>
+      {% endif %}
+      
+      <!-- ACTION BUTTONS -->
+      <div class="actions" style="padding-top: 20px;">
+        <button 
+          class="attempt-player-action-btn" 
+          style="min-width: 100px;" 
+          type="submit" 
+          name="nav" 
+          value="prev" 
+          {% if idx == 0 %}disabled{% endif %}
+        >
+          ← Previous
         </button>
-        <button style="margin-left: 75px;"type="submit" name="nav" value="next" {% if idx == counts.total|add:"-1" %}disabled{% endif %}>Next →</button>
-
-        <!-- <button type="submit" name="action" value="submit">Submit</button> -->
+        
+        <button 
+          class="attempt-player-action-btn" 
+          style="min-width: 135px;" 
+          type="submit" 
+          name="action" 
+          value="clear"
+        >
+          🗑️ Clear Answer
+        </button>
+        
+        <button 
+          class="attempt-player-action-btn {% if answer_obj.flagged %}flagged{% endif %}" 
+          style="min-width: 135px;" 
+          type="submit" 
+          name="action" 
+          value="toggle_flag"
+        >
+          {% if answer_obj.flagged %}🚩 Unflag{% else %}🚩 Flag{% endif %}
+        </button>
+        
+        <button 
+          class="attempt-player-action-btn" 
+          style="min-width: 100px;" 
+          type="submit" 
+          name="nav" 
+          value="next" 
+          {% if idx == counts.total|add:"-1" %}disabled{% endif %}
+        >
+          Next →
+        </button>
       </div>
       
     </form>
@@ -166,9 +429,9 @@
         <div style="display:flex; gap:10px; margin-top:16px;">
           <form method="post" action="{% url 'attempt_submit' attempt.id %}">
             {% csrf_token %}
-            <button type="submit">Submit Sekarang</button>
+            <button class="attempt-player-action-btn" type="submit">Submit</button>
           </form>
-          <button type="button" onclick="closeSubmitModal()">Batal</button>
+          <button class="attempt-player-action-btn" type="button" onclick="closeSubmitModal()">Batal</button>
         </div>
       </div>
     </div>
@@ -179,40 +442,6 @@
 
 
 <!-- Scripts -->
-<script>
-  (function(){
-    const form = document.getElementById("answer-form");
-    if(!form) return;
-
-    const idx = "{{ idx }}";
-    const url = "{% url 'attempt_autosave' attempt.id %}";
-    const csrftoken = form.querySelector('input[name="csrfmiddlewaretoken"]').value;
-
-    let t = null;
-    function autosave(){
-      const fd = new FormData(form);
-      fd.set("idx", idx);
-
-      fetch(url, {
-        method: "POST",
-        headers: { "X-CSRFToken": csrftoken },
-        body: fd
-      }).then(r => r.json()).then(data => {
-        // optional: tampilkan indikator "tersimpan"
-        // console.log(data);
-      }).catch(() => {});
-    }
-
-    form.addEventListener("change", (e) => {
-      if (e.target && e.target.name === "choice") {
-        clearTimeout(t);
-        t = setTimeout(autosave, 250); // debounce
-      }
-    });
-  })();
-</script>
-
-
 <script>
   // countdown visual (server tetap sumber kebenaran)
   (function(){
@@ -286,7 +515,7 @@
 
     async function autosave(){
       try{
-        if(statusEl) statusEl.textContent = "Menyimpan...";
+        if(statusEl) statusEl.textContent = "Saving...";
         const fd = new FormData(form);
         fd.set("idx", idx);
 
@@ -304,7 +533,7 @@
           return;
         }
 
-        if(statusEl) statusEl.textContent = "Tersimpan ✅";
+        if(statusEl) statusEl.textContent = "Saved ✅";
         setTimeout(() => { if(statusEl) statusEl.textContent = ""; }, 1200);
       }catch(e){
         if(statusEl) statusEl.textContent = "Gagal menyimpan (cek koneksi)";
@@ -318,7 +547,7 @@
       }
     });
   })();
-</script>
+  </script>
 
 <script>
   (function(){
@@ -374,5 +603,113 @@
   }
 </script>
 
+<script>
+  function showExplanation(){
+    const box = document.getElementById("explanation-box");
+    const btn = document.getElementById("toggle-expl-btn");
+    const opt = document.getElementById("options-wrap");
+    if(!box || !btn) return;
+
+    box.style.display = "block";
+    btn.textContent = "Sembunyikan Pembahasan";
+    if(opt) opt.classList.add("reveal");
+  }
+
+  function hideExplanation(){
+    const box = document.getElementById("explanation-box");
+    const btn = document.getElementById("toggle-expl-btn");
+    const opt = document.getElementById("options-wrap");
+    if(!box || !btn) return;
+
+    box.style.display = "none";
+    btn.textContent = "Tampilkan Pembahasan";
+    if(opt) opt.classList.remove("reveal");
+  }
+
+  function toggleExplanation(){
+    const box = document.getElementById("explanation-box");
+    const btn = document.getElementById("toggle-expl-btn");
+    const wrap = document.getElementById("options-wrap");
+
+    if(!box || !btn || !wrap) return;
+
+    const visible = box.style.display === "block";
+
+    if(!visible){
+      box.style.display = "block";
+      btn.textContent = "Hide Answer";
+      applyLearnEvaluation();   // 🔥 EVALUASI DI SINI
+    } else {
+      box.style.display = "none";
+      btn.textContent = "Show Answer";
+      wrap.classList.remove("reveal");
+
+      // Reset semua warna & badge
+      wrap.querySelectorAll("label.option").forEach(label => {
+        label.classList.remove("opt-correct", "opt-wrong");
+        const cb = label.querySelector(".correct-badge");
+        const wb = label.querySelector(".wrong-badge");
+        if(cb) cb.style.display = "none";
+        if(wb) wb.style.display = "none";
+      });
+    }
+  }
+</script>
+
+<script>
+  function applyLearnEvaluation(){
+    const wrap = document.getElementById("options-wrap");
+    if(!wrap) return;
+
+    const answerType = "{{ current_question.answer_type }}"; // "WEIGHTED" / "MULTI" / etc
+
+    // aktifkan mode reveal (untuk CSS reveal-only kalau kamu masih pakai)
+    wrap.classList.add("reveal");
+
+    const labels = wrap.querySelectorAll("label.option");
+
+    labels.forEach(label => {
+      // reset state
+      label.classList.remove("opt-correct", "opt-wrong");
+
+      const input = label.querySelector('input[name="choice"]');
+      const checked = !!(input && input.checked);
+
+      const isCorrect = label.dataset.correct === "1";
+
+      // badges
+      const correctBadge = label.querySelector(".correct-badge");
+      const wrongBadge   = label.querySelector(".wrong-badge");
+      const pointBadge   = label.querySelector(".point-badge");
+      const idealBadge   = label.querySelector(".ideal-badge");
+
+      // reset all badges
+      if(correctBadge) correctBadge.style.display = "none";
+      if(wrongBadge)   wrongBadge.style.display   = "none";
+      if(pointBadge)   pointBadge.style.display   = "none";
+      if(idealBadge)   idealBadge.style.display   = "none";
+
+      // ===== WEIGHTED =====
+      if(answerType === "WEIGHTED"){
+        if(pointBadge) pointBadge.style.display = "inline-block";
+        if(idealBadge) idealBadge.style.display = "inline-block";
+        return;
+      }
+
+      // ===== NON-WEIGHTED =====
+      // 1) kunci jawaban: semua opsi benar -> hijau + ✅
+      if(isCorrect){
+        label.classList.add("opt-correct");
+        if(correctBadge) correctBadge.style.display = "inline-block";
+      }
+
+      // 2) jika user memilih opsi salah -> merah + ❌ hanya untuk yang dipilih
+      if(checked && !isCorrect){
+        label.classList.add("opt-wrong");
+        if(wrongBadge) wrongBadge.style.display = "inline-block";
+      }
+    });
+  }
+</script>
 
 {% endblock %}
