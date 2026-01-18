@@ -21,14 +21,71 @@
   .opt-wrong { border-color:#ff8080; background:#ffefef; }
   .pill { border:1px solid #ddd; padding:6px 10px; border-radius:5px; display:inline-block; }
 
-  @media (max-width: 768px) {
-    .layout { flex-direction: column; }
-    .sidebar {
-      width: 100%;
-      padding: 12px;
-    }
+    .grid { 
+    display: grid; 
+    grid-template-columns: repeat(5, 1fr); 
+    gap: 4px; 
+  }
+  
+  .qbtn { 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    height: 36px; 
+    border-radius: 4px; 
+    border: 1px solid #ccc; 
+    text-decoration: none; 
+    font-weight: 600; 
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+    cursor: pointer;
+  }
+  
+  .qbtn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+  
+  .qbtn:active:not(:disabled) {
+    transform: translateY(0);
   }
 
+  @media (max-width: 768px) {
+    .layout { flex-direction: column; }
+    .sidebar { width: 100%; }
+    .grid { grid-template-columns: repeat(10, 1fr); gap: 3px; }
+    .qbtn { height: 32px; font-size: 13px; }
+    .actions { justify-content: center; }
+  }
+  .actions { 
+    display: flex; 
+    gap: 10px; 
+    flex-wrap: wrap; 
+    margin-top: 14px; 
+  }
+
+  .attempt-review-action-btn {
+    padding: 8px 12px;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+    background: #fff;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-size: 14px;
+  }
+  
+  .attempt-review-action-btn:hover:not(:disabled) {
+    background-color: #f1f1f1;
+    border-color: #bbbbbb;
+  }
+  
+  .attempt-review-action-btn:active:not(:disabled) {
+    background-color: #dddddd;
+  }
+  
+  .attempt-review-action-btn:disabled { 
+    opacity: 0.5; 
+    cursor: not-allowed; 
+  }
 </style>
 
 <!-- TOP BAR -->
@@ -64,25 +121,42 @@
     <div style="white-space:pre-line; margin-bottom:12px;">{{ idx|add:1 }}. {{ q.stem }}</div>
 
     {% if q.image %}
-      <img src="{{ q.image.url }}" style="max-width:100%; border-radius:10px; border:1px solid #eee; margin-bottom:12px;">
+      <img src="{{ q.image.url }}" style="max-width:350px; border-radius:10px; border:1px solid #eee; margin-bottom:12px;">
     {% endif %}
 
     {% if q.audio %}
       <audio controls src="{{ q.audio.url }}" style="width:100%; margin-bottom:12px;"></audio>
     {% endif %}
 
-    <h3>Answer</h3>
-
     {% if q.answer_type == "WEIGHTED" %}
       {% for c in choices_view %}
-        <div class="option {% if c.is_selected %}opt-correct{% endif %}">
-          {{ c.label }}. {{ c.text }}
+        <div style="display:block;" class="option {% if c.is_selected %}opt-correct{% endif %}">
+          <!-- {{ c.label }}. {{ c.text }} -->
+
+          <span>{{ c.label }}.</span>
+          {% if c.text %}
+            <span>{{ c.text }}</span>
+          {% endif %}
+          {% if c.image %}
+            <span style="display:block;">
+              <img src="{{ c.image.url }}" style="max-width:250px; border-radius:6px; border:1px solid #ddd;">
+            </span>
+          {% endif %}
+          {% if c.audio %}
+            <span>
+              <audio controls preload="none" style="height:35px;">
+                <source src="{{ c.audio.url }}">
+                Your browser does not support the audio element.
+              </audio>
+            </span>
+          {% endif %}
+
           <span style="margin-left:8px; opacity:.8;">
             ({{ c.points }} poin)
           </span>
 
           {% if c.is_selected %}
-            <span style="margin-left:8px;">🎯</span>
+            <!-- <span style="margin-left:8px;">🎯</span> -->
           {% endif %}
 
           {# opsional: tampilkan "Kunci/Ideal" kalau kamu memang pakai is_correct sebagai opsi ideal #}
@@ -93,15 +167,33 @@
       {% endfor %}
     {% else %}
       {% for c in choices_view %}
-        <div class="option
+        <div style="display: block;" class="option
           {% if c.is_correct %}opt-correct{% endif %}
           {% if c.is_selected and not c.is_correct %}opt-wrong{% endif %}
         ">
-          {{ c.label }}. {{ c.text }}
+          <!-- {{ c.label }}. {{ c.text }} -->
+
+          <span>{{ c.label }}.</span>
+          {% if c.text %}
+            <span>{{ c.text }}</span>
+          {% endif %}
+          {% if c.image %}
+            <span style="display:block;">
+              <img src="{{ c.image.url }}" style="max-width:250px; border-radius:6px; border:1px solid #ddd;">
+            </span>
+          {% endif %}
+          {% if c.audio %}
+            <span>
+              <audio controls preload="none" style="height:35px;">
+                <source src="{{ c.audio.url }}">
+                Your browser does not support the audio element.
+              </audio>
+            </span>
+          {% endif %}
 
           {% if c.is_correct and c.is_selected %}
             <span style="margin-left:8px;">✅</span>
-            <span style="margin-left:8px;">🎯</span>
+            <!-- <span style="margin-left:8px;">🎯</span> -->
           {% elif c.is_correct %}
             <span style="margin-left:8px;">✅</span>
           {% elif c.is_selected %}
@@ -111,19 +203,40 @@
       {% endfor %}
     {% endif %}
 
+    <br>
+    <b>Answer</b>
+    <br>
+    <br>
 
-
-    <h3>Explanation</h3>
     {% if q.explanation %}
       <div style="white-space:pre-line;">{{ q.explanation }}</div>
     {% else %}
       <i>No explanation yet</i>
     {% endif %}
+    <br>
 
-    <div style="display:flex; gap:10px; margin-top:14px;">
-      <a href="?q={{ idx|add:-1 }}">← Prev</a>
-      <a href="?q={{ idx|add:1 }}">Next →</a>
+    <div class="actions" style="display:flex; gap:10px; margin-top:14px;">
+
+      <button
+        class="attempt-review-action-btn" style="min-width: 100px;" 
+        type="button"
+        onclick="location.href='?q={{ idx|add:-1 }}'"
+        {% if idx == 0 %}disabled{% endif %}
+      >
+        ← Previous
+      </button>
+
+      <button
+        class="attempt-review-action-btn" style="min-width: 100px;" 
+        type="button"
+        onclick="location.href='?q={{ idx|add:1 }}'"
+        {% if idx == counts.total|add:"-1" %}disabled{% endif %}
+      >
+        Next →
+      </button>
     </div>
+
   </section>
 </div>
+
 {% endblock %}

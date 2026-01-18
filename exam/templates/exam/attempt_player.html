@@ -219,6 +219,29 @@
     .qbtn { height: 32px; font-size: 13px; }
     .actions { justify-content: center; }
   }
+
+  #timer {
+    font-weight: bold;
+    transition: color 0.3s ease;
+  }
+
+  /* < 1 menit */
+  #timer.warning {
+    color: #e67e22; /* oranye */
+  }
+
+  /* < 10 detik */
+  #timer.danger {
+    color: #e74c3c; /* merah */
+    animation: blink 1s infinite;
+  }
+
+  @keyframes blink {
+    0%   { opacity: 1; }
+    50%  { opacity: 0.2; }
+    100% { opacity: 1; }
+  }
+
 </style>
 
 <div class="topbar" style="font-family: 'Roboto', sans-serif;">
@@ -228,8 +251,8 @@
   <div style="width:150px;">
     <span id="save-status" style="margin-left:10px; font-weight:normal;"></span>
   </div>
-  <div class="pill">
-    Time Left: <b id="timer">{{ time_info.remaining_seconds }}</b> s
+  <div class="pill" style="width:70px; display: flex; justify-content: center; align-items: center;">
+    <b id="timer" data-seconds="{{ time_info.remaining_seconds }}">00:00</b>
   </div>
 
 </div>
@@ -284,7 +307,7 @@
 
       {% if current_question.image %}
         <div style="margin-top:10px;">
-          <img src="{{ current_question.image.url }}" style="max-width:100%; border-radius:10px; border:1px solid #eee;">
+          <img src="{{ current_question.image.url }}" style="max-width:400px; border-radius:10px; border:1px solid #eee;">
         </div>
       {% endif %}
 
@@ -298,13 +321,12 @@
     <form method="post" id="answer-form">
       {% csrf_token %}
 
-
       <div id="options-wrap">
         {% if attempt.mode == "LEARN" %}
           {% for c in choices_view %}
             <label class="option"
                   data-correct="{% if c.is_correct %}1{% else %}0{% endif %}"
-                  style="display:block; cursor:pointer;">
+                  style="display: block; cursor:pointer;">
 
               {% if current_question.answer_type == "MULTI" %}
                 <input type="checkbox" name="choice" value="{{ c.id }}" {% if c.is_selected %}checked{% endif %}>
@@ -312,7 +334,23 @@
                 <input type="radio" name="choice" value="{{ c.id }}" {% if c.is_selected %}checked{% endif %}>
               {% endif %}
 
-              <b>{{ c.label }}</b> {{ c.text }}
+              <span>{{ c.label }}.</span>
+              {% if c.text %}
+                <span>{{ c.text }}</span>
+              {% endif %}
+              {% if c.image %}
+                <span>
+                  <img src="{{ c.image.url }}" style="max-width:250px; border-radius:6px; border:1px solid #ddd;">
+                </span>
+              {% endif %}
+              {% if c.audio %}
+                <span>
+                  <audio controls preload="none" style="height:35px;">
+                    <source src="{{ c.audio.url }}">
+                    Your browser does not support the audio element.
+                  </audio>
+                </span>
+              {% endif %}
 
               <!-- Badge evaluasi: default hidden -->
               {% if current_question.answer_type != "WEIGHTED" %}
@@ -334,7 +372,23 @@
               <label class="option" style="display:block; cursor:pointer;">
                 <input type="checkbox" name="choice" value="{{ c.id }}"
                       {% if c.id in selected_ids %}checked{% endif %}>
-                <b>{{ c.label }}</b> {{ c.text }}
+                <span>{{ c.label }}.</span>
+                {% if c.text %}
+                  <span>{{ c.text }}</span>
+                {% endif %}
+                {% if c.image %}
+                  <span style="display:block;">
+                    <img src="{{ c.image.url }}" style="max-width:250px; border-radius:6px; border:1px solid #ddd;">
+                  </span>
+                {% endif %}
+                {% if c.audio %}
+                  <span>
+                    <audio controls preload="none" style="height:35px;">
+                      <source src="{{ c.audio.url }}">
+                      Your browser does not support the audio element.
+                    </audio>
+                  </span>
+                {% endif %}
               </label>
             {% endfor %}
           {% else %}
@@ -342,7 +396,23 @@
               <label class="option" style="display:block; cursor:pointer;">
                 <input type="radio" name="choice" value="{{ c.id }}"
                       {% if c.id in selected_ids %}checked{% endif %}>
-                <b>{{ c.label }}</b> {{ c.text }}
+                <span>{{ c.label }}.;</span>
+                {% if c.text %}
+                  <span>{{ c.text }}</span>
+                {% endif %}
+                {% if c.image %}
+                  <span style="display:block;">
+                    <img src="{{ c.image.url }}" style="max-width:250px; border-radius:6px; border:1px solid #ddd;">
+                  </span>
+                {% endif %}
+                {% if c.audio %}
+                  <span>
+                    <audio controls preload="none" style="height:35px;">
+                      <source src="{{ c.audio.url }}">
+                      Your browser does not support the audio element.
+                    </audio>
+                  </span>
+                {% endif %}
               </label>
             {% endfor %}
           {% endif %}
@@ -418,12 +488,12 @@
     <!-- Submit Modal -->
     <div id="submit-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:999;">
       <div style="background:#fff; max-width:420px; margin:10% auto; padding:20px; border-radius:5px;">
-        <h2>Konfirmasi Submit</h2>
+        <h2>Submit Confirmation</h2>
         <ul>
           <li>Total: {{ counts.total }}</li>
-          <li>Sudah dijawab: {{ counts.answered }}</li>
-          <li>Kosong: {{ counts.blank }}</li>
-          <li>Ragu-ragu: {{ counts.flagged }}</li>
+          <li>Answered: {{ counts.answered }}</li>
+          <li>Blank: {{ counts.blank }}</li>
+          <li>Flagged: {{ counts.flagged }}</li>
         </ul>
 
         <div style="display:flex; gap:10px; margin-top:16px;">
@@ -711,5 +781,53 @@
     });
   }
 </script>
+
+<script>
+  (function () {
+    const timerEl = document.getElementById("timer");
+    if (!timerEl) return;
+
+    let remaining = parseInt(timerEl.dataset.seconds || "0", 10);
+
+    function formatTime(sec) {
+      const m = Math.floor(sec / 60);
+      const s = sec % 60;
+      return String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
+    }
+
+    function updateUI() {
+      timerEl.textContent = formatTime(remaining);
+
+      timerEl.classList.remove("warning", "danger", "blink");
+
+      if (remaining <= 60 && remaining > 10) {
+        timerEl.classList.add("warning");
+      }
+
+      if (remaining <= 10 && remaining > 0) {
+        timerEl.classList.add("danger", "blink");
+      }
+
+      if (remaining <= 0) {
+        timerEl.textContent = "00:00";
+        timerEl.classList.add("danger");
+      }
+    }
+
+    updateUI();
+
+    const interval = setInterval(() => {
+      if (remaining <= 0) {
+        clearInterval(interval);
+        return;
+      }
+
+      remaining--;
+      updateUI();
+    }, 1000);
+  })();
+</script>
+
+
 
 {% endblock %}

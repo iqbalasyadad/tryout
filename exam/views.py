@@ -250,6 +250,8 @@ def attempt_player(request, attempt_id: int):
                 "id": c.id,
                 "label": c.label,
                 "text": c.text,
+                "image": c.image,
+                "audio": c.audio,
                 "points": c.points,
                 "is_selected": c.id in selected_ids,
                 "is_correct": c.id in correct_ids,   # untuk non-weighted
@@ -382,6 +384,8 @@ def attempt_review(request, attempt_id: int):
     )
     ans_map = {a.question_id: a for a in answers}
 
+    counts = {"total": len(questions)}
+
     # index soal
     try:
         idx = int(request.GET.get("q", 0))
@@ -406,6 +410,8 @@ def attempt_review(request, attempt_id: int):
         choices_view.append({
             "label": c.label,
             "text": c.text,
+            "image": c.image,
+            "audio": c.audio,
             "points": c.points,
             "is_selected": is_sel,
             "is_correct": is_cor,
@@ -430,7 +436,7 @@ def attempt_review(request, attempt_id: int):
             status = "flagged"
 
         grid.append({"num": i + 1, "idx": i, "status": status})
-
+    
     return render(
         request,
         "exam/attempt_review.html",
@@ -438,6 +444,7 @@ def attempt_review(request, attempt_id: int):
             "attempt": attempt,
             "questions": questions,
             "idx": idx,
+            "counts": counts,
             "q": q,
             "grid": grid,
             "choices_view": choices_view,

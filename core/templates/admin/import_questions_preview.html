@@ -1,0 +1,46 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+  <h1>Preview Import CSV</h1>
+
+  <p><b>Total soal:</b> {{ total_questions }}</p>
+  <p><b>Total pilihan:</b> {{ total_choices }}</p>
+
+  {% if errors %}
+    <div style="background:#ffecec; padding:12px; border:1px solid #ffb3b3;">
+      <h3 style="color:#b30000;">Errors:</h3>
+      <ul>
+        {% for e in errors %}
+          <li>{{ e }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    <p style="margin-top:15px;">Perbaiki CSV lalu upload ulang.</p>
+    <a href="../" class="button cancel-link">Kembali</a>
+  {% else %}
+    <h3>Preview (10 soal pertama)</h3>
+    <table class="admin-table">
+      <tr>
+        <th>No</th>
+        <th>Stem</th>
+        <th>Answer Type</th>
+        <th>Jumlah Pilihan</th>
+      </tr>
+      {% for q in preview %}
+        <tr>
+          <td>{{ forloop.counter }}</td>
+          <td>{{ q.stem|truncatechars:80 }}</td>
+          <td>{{ q.answer_type }}</td>
+          <td>{{ q.choice_count }}</td>
+        </tr>
+      {% endfor %}
+    </table>
+
+    <form method="post" style="margin-top:20px;">
+      {% csrf_token %}
+      <input type="hidden" name="confirm" value="1">
+      <button type="submit" class="default">Confirm Import</button>
+      <a href="../" class="button cancel-link">Cancel</a>
+    </form>
+  {% endif %}
+{% endblock %}

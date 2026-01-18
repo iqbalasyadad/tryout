@@ -1,0 +1,17 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+  <h1>Import Questions from CSV</h1>
+
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.as_p }}
+
+    <button type="submit" class="default">Upload & Preview</button>
+  </form>
+
+  <p style="margin-top:20px;">
+    Header CSV:
+    <code>question_key,package_slug,section_title,order_index,answer_type,stem,explanation,choice_label,choice_text,choice_points,is_correct,image_url,audio_url,choice_image_url,choice_audio_url</code>
+  </p>
+{% endblock %}
