@@ -1,80 +1,225 @@
 {% extends "core/base.html" %}
 {% block title %}Dashboard | Tryout{% endblock %}
+
 {% block content %}
-  <h1>Dashboard</h1>
+<style>
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 24px;
+    }
 
-  <h2>Attempt yang masih berjalan</h2>
-  <ul>
-    {% for a in in_progress %}
-      <li>
-        <b>{{ a.package.title }}</b> ({{ a.mode }})
-        - <a href="{% url 'attempt_player' a.id %}">Lanjutkan</a>
-      </li>
-    {% empty %}
-      <li>Tidak ada attempt yang sedang berjalan.</li>
-    {% endfor %}
-  </ul>
+    .card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        padding: 20px;
+        margin-bottom: 24px;
+        border: 1px solid #eee;
+    }
 
-  <hr>
+    .card h3 {
+        margin-top: 0;
+        margin-bottom: 16px;
+        font-size: 18px;
+        color: #333;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
 
-  <h2>Paket Favorit</h2>
-  <ul>
-    {% for x in favorites %}
-      <li>
-        <a href="{% url 'package_detail' x.package.slug %}">{{ x.package.title }}</a>
-        - {{ x.package.category.name }}
-      </li>
-    {% empty %}
-      <li>Belum ada favorit.</li>
-    {% endfor %}
-  </ul>
+    .stat-box {
+        background: linear-gradient(135deg, #0765f3 0%, #0551d8 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 12px;
+        margin-bottom: 20px;
+        text-align: center;
+    }
 
-  <h2>Paket Dibeli</h2>
-  <ul>
-    {% for x in purchased %}
-      <li>
-        <a href="{% url 'package_detail' x.package.slug %}">{{ x.package.title }}</a>
-        - {{ x.package.category.name }}
-      </li>
-    {% empty %}
-      <li>Belum ada paket dibeli.</li>
-    {% endfor %}
-  </ul>
+    .stat-value {
+        font-size: 32px;
+        font-weight: bold;
+    }
 
-  <hr>
+    .stat-label {
+        opacity: 0.9;
+    }
 
-  <h2>Riwayat Attempt (50 terbaru)</h2>
-  <table border="1" cellpadding="8" cellspacing="0">
-    <thead>
-      <tr>
-        <th>Tanggal</th>
-        <th>Paket</th>
-        <th>Mode</th>
-        <th>Status</th>
-        <th>Skor</th>
-        <th>Aksi</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for a in attempts %}
-        <tr>
-          <td>{{ a.created_at }}</td>
-          <td>{{ a.package.title }}</td>
-          <td>{{ a.mode }}</td>
-          <td>{{ a.status }}</td>
-          <td>{{ a.score }} / {{ a.max_score }}</td>
-          <td>
-            {% if a.status == "IN_PROGRESS" %}
-              <a href="{% url 'attempt_player' a.id %}">Lanjutkan</a>
+    .scroll-list {
+        max-height: 300px;
+        overflow-y: auto;
+        padding-right: 5px;
+    }
+
+    /* Custom scrollbar */
+    .scroll-list::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .scroll-list::-webkit-scrollbar-thumb {
+        background: #ccc;
+        border-radius: 3px;
+    }
+
+    .list-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px;
+        border-bottom: 1px solid #f0f0f0;
+        transition: background 0.2s;
+        border-radius: 6px;
+    }
+
+    .list-item:hover {
+        background: #f9f9f9;
+    }
+
+    .list-item:last-child {
+        border-bottom: none;
+    }
+
+    .badge {
+        font-size: 11px;
+        padding: 4px 8px;
+        border-radius: 20px;
+        background: #eee;
+    }
+
+    .badge-tryout {
+        background: #e3f2fd;
+        color: #1565c0;
+    }
+
+    .badge-learn {
+        background: #e8f5e9;
+        color: #2e7d32;
+    }
+
+    .btn-sm {
+        padding: 4px 10px;
+        font-size: 12px;
+        border-radius: 4px;
+        text-decoration: none;
+        background: #0765f3;
+        color: white;
+    }
+
+    .search-box {
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        width: 100%;
+        max-width: 300px;
+        /* Limit width */
+        box-sizing: border-box;
+        margin-bottom: 15px;
+    }
+
+    @media(max-width: 768px) {
+        .dashboard-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="dashboard-grid">
+    <!-- Left Column: Attempts & Progress -->
+    <div>
+        <div class="stat-box">
+            <div class="stat-value">{{ avg_score }}</div>
+            <div class="stat-label">Rata-rata Skor</div>
+        </div>
+
+        {% if in_progress %}
+        <div class="card">
+            <h3>Lanjutkan Pengerjaan</h3>
+            <div class="scroll-list" style="max-height: 200px;">
+                {% for attempt in in_progress %}
+                <div class="list-item">
+                    <div>
+                        <b>{{ attempt.package.title }}</b>
+                        <div style="font-size: 12px; color: #666;">
+                            {{ attempt.started_at|date:"d M Y, H:i" }} &bull; Mode {{ attempt.mode }}
+                        </div>
+                    </div>
+                    <a href="{% url 'attempt_player' attempt.id %}" class="btn-sm">Lanjut</a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="card">
+            <h3>Riwayat Pengerjaan</h3>
+            {% if attempts %}
+            <div class="scroll-list">
+                {% for attempt in attempts %}
+                {% if attempt.status != "IN_PROGRESS" %}
+                <div class="list-item">
+                    <div>
+                        <div>{{ attempt.package.title }}</div>
+                        <div style="font-size: 12px; color: #666;">
+                            {{ attempt.submitted_at|date:"d M Y, H:i" }} &bull; Skor: <b>{{ attempt.score }}</b>
+                        </div>
+                    </div>
+                    <a href="{% url 'attempt_result' attempt.id %}" style="font-size:12px;">Lihat Hasil</a>
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
             {% else %}
-              <a href="{% url 'attempt_result' a.id %}">Hasil</a> |
-              <a href="{% url 'attempt_review' a.id %}">Review</a>
+            <p style="text-align:center; color:#999;">Belum ada riwayat.</p>
             {% endif %}
-          </td>
-        </tr>
-      {% empty %}
-        <tr><td colspan="6">Belum ada riwayat.</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
+        </div>
+    </div>
+
+    <!-- Right Column: Packages -->
+    <div>
+        <div class="card">
+            <h3>Paket Saya</h3>
+
+            <form method="get" action="" style="display:flex; gap:5px; margin-bottom:15px;">
+                <input type="text" name="q" class="search-box" placeholder="Cari paket/kategori/section..." value="{{ q }}" style="margin-bottom:0;">
+                <button type="submit" class="btn-sm" style="border:none; cursor:pointer;">🔍</button>
+            </form>
+
+            <h4>Favorit</h4>
+            <div class="scroll-list" style="max-height: 200px; margin-bottom: 20px;">
+                {% for up in favorites %}
+                <div class="list-item">
+                    <a href="{% url 'package_detail' up.package.slug %}"
+                        style="text-decoration:none; color:#333; font-weight:500;">
+                        {{ up.package.title }}
+                    </a>
+                    <span style="font-size:12px;">⭐</span>
+                </div>
+                {% empty %}
+                <div style="padding:10px; color:#999; font-size:13px;">Belum ada favorit.</div>
+                {% endfor %}
+            </div>
+
+            <h4>Semua Paket</h4>
+            <div class="scroll-list" style="max-height: 300px;">
+                {% for up in purchased %}
+                <div class="list-item">
+                    <a href="{% url 'package_detail' up.package.slug %}" style="text-decoration:none; color:#333;">
+                        {{ up.package.title }}
+                    </a>
+                    <span style="font-size:10px; color:green;">✓</span>
+                </div>
+                {% empty %}
+                <div style="padding:10px; color:#999; font-size:13px;">Belum ada paket yang diambil.</div>
+                {% endfor %}
+            </div>
+
+            <div style="margin-top: 10px; text-align: center;">
+                <a href="{% url 'package_list' %}" class="btn-sm"
+                    style="background:#eee; color:#333; width:100%; display:block; padding:10px; box-sizing:border-box;">+ Tambah Paket</a>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% endblock %}

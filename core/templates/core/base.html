@@ -1,26 +1,172 @@
 <!doctype html>
 <html lang="id">
+
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>{% block title %}Tryout{% endblock %}</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=Roboto:wght@400;500;700&display=swap"
+    rel="stylesheet">
+
+  <style>
+    :root {
+      --primary: #0765f3;
+      --primary-dark: #0551d8;
+      --text: #333;
+      --bg: #f8f9fa;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Public Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+    }
+
+    a {
+      color: var(--primary);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    header {
+      background: white;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      padding: 0 20px;
+    }
+
+    nav {
+      max-width: 1000px;
+      margin: 0 auto;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      font-weight: 800;
+      font-size: 20px;
+      color: var(--primary);
+      text-decoration: none !important;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .nav-links a {
+      color: #555;
+      font-weight: 500;
+      font-size: 14px;
+      text-decoration: none;
+      transition: color 0.1s;
+    }
+
+    .nav-links a:hover,
+    .nav-links a.active {
+      color: var(--primary);
+    }
+
+    .btn-nav-primary {
+      background: var(--primary);
+      color: white !important;
+      padding: 8px 16px;
+      border-radius: 6px;
+      transition: opacity 0.2s;
+    }
+
+    .btn-nav-primary:hover {
+      opacity: 0.9;
+      text-decoration: none !important;
+    }
+
+    main {
+      max-width: 1000px;
+      margin: 30px auto;
+      padding: 0 20px;
+      min-height: calc(100vh - 150px);
+    }
+
+    /* Utility for messages */
+    .alert {
+      padding: 12px;
+      border-radius: 6px;
+      margin-bottom: 20px;
+      background: #e3f2fd;
+      color: #0d47a1;
+      border: 1px solid #bbdefb;
+    }
+
+    .alert-success {
+      background: #e8f5e9;
+      color: #1b5e20;
+      border-color: #c8e6c9;
+    }
+
+    .alert-error {
+      background: #ffebee;
+      color: #b71c1c;
+      border-color: #ffcdd2;
+    }
+  </style>
+  {% block extra_head %}{% endblock %}
 </head>
+
 <body>
-  <header style="padding:5px; border-bottom:1px solid #ddd; font-family: 'Roboto', sans-serif;">
-    <strong>ONLINE TRYOUT</strong>
-    <span style="float:right;">
-      {% if request.user.is_authenticated %}
-        <a href="{% url 'dashboard' %}">Dashboard</a> |
-        Hi, {{ request.user.username }} |
-        <a href="{% url 'logout' %}">Logout</a>
-      {% else %}
-        <a href="{% url 'login' %}">Login</a>
-      {% endif %}
-    </span>
+  <header>
+    <nav>
+      <a href="{% url 'home' %}" class="logo">
+        <span style="font-size:24px;">🚀</span> TRYOUT
+      </a>
+
+      <div class="nav-links">
+        <a href="{% url 'package_list' %}">Browse Packages</a>
+
+        {% if request.user.is_authenticated %}
+        <div style="height:20px; width:1px; background:#ddd;"></div>
+        <a href="{% url 'dashboard' %}">Dashboard</a>
+        <div style="display:flex; align-items:center; gap:8px;">
+          {% if request.user.profile.avatar %}
+          <img src="{{ request.user.profile.avatar.url }}"
+            style="width:28px; height:28px; border-radius:50%; object-fit:cover;">
+          {% endif %}
+          <a href="{% url 'settings' %}" style="font-weight:600; color:#333;">{{ request.user.username }}</a>
+        </div>
+        <a href="{% url 'logout_custom' %}" style="color:#d32f2f;">Logout</a>
+        {% else %}
+        <a href="{% url 'login' %}" class="btn-nav-primary">Login</a>
+        {% endif %}
+      </div>
+    </nav>
   </header>
 
-  <main style="padding:0px;">
+  <main>
+    {% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }}">
+      {{ message }}
+    </div>
+    {% endfor %}
+    {% endif %}
+
     {% block content %}{% endblock %}
   </main>
 </body>
+
 </html>

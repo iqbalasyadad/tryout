@@ -1,22 +1,124 @@
 {% extends "core/base.html" %}
-{% block title %}Hasil | {{ attempt.package.title }}{% endblock %}
+{% block title %}Result - {{ attempt.package.title }}{% endblock %}
+
 {% block content %}
-  <h1>Hasil Attempt</h1>
-  <p><b>{{ attempt.package.title }}</b> ({{ attempt.mode }})</p>
-  <p>Status: <b>{{ attempt.status }}</b></p>
+<style>
+  .result-card {
+    max-width: 600px;
+    margin: 40px auto;
+    background: white;
+    border-radius: 16px;
+    padding: 40px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+    text-align: center;
+    border: 1px solid #f0f0f0;
+  }
 
-  <h2>Skor: {{ attempt.score }} / {{ attempt.max_score }}</h2>
+  .score-circle {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    background: conic-gradient(#0765f3 var(--pct), #f0f2f5 0);
+    margin: 0 auto 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
 
-  <ul>
-    <li>Total soal: {{ total }}</li>
-    <li>Sudah dijawab: {{ answered }}</li>
-    <li>Kosong: {{ blank }}</li>
-    <li>Ragu-ragu: {{ flagged }}</li>
-  </ul>
+  .score-circle::before {
+    content: "";
+    position: absolute;
+    inset: 10px;
+    border-radius: 50%;
+    background: white;
+  }
 
-  <p>
-    <a href="{% url 'attempt_review' attempt.id %}">Review & Pembahasan →</a>
-  </p>
+  .score-text {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+  }
 
-  <a href="{% url 'package_detail' attempt.package.slug %}">Kembali ke Paket</a>
+  .score-val {
+    font-size: 36px;
+    font-weight: 800;
+    color: #333;
+  }
+
+  .score-label {
+    font-size: 12px;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    margin-bottom: 30px;
+  }
+
+  .stat-item {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+  }
+
+  .stat-num {
+    font-size: 20px;
+    font-weight: bold;
+  }
+
+  .stat-lbl {
+    font-size: 12px;
+    color: #666;
+  }
+</style>
+
+<div class="result-card">
+  <div style="font-size:14px; text-transform:uppercase; color:#888; letter-spacing:1px; margin-bottom:10px;">Result
+    Summary</div>
+  <h2 style="margin:0 0 30px;">{{ attempt.package.title }}</h2>
+
+  {% with ratio=attempt.score|divisibleby:attempt.max_score %}
+  <!-- Simple calc for circle visualization (needs server side logic ideally, doing simple approx here) -->
+  <div class="score-circle" style="--pct: {{ attempt.score }}%">
+    <div class="score-text">
+      <span class="score-val">{{ attempt.score }}</span>
+      <span class="score-label">Score</span>
+    </div>
+  </div>
+  {% endwith %}
+
+  <div class="stat-grid">
+    <div class="stat-item" style="color:#4caf50;">
+      <div class="stat-num">{{ answered }}</div>
+      <div class="stat-lbl">Correct/Answered</div>
+    </div>
+    <div class="stat-item" style="color:#f44336;">
+      <div class="stat-num">{{ blank }}</div>
+      <div class="stat-lbl">Blank</div>
+    </div>
+    <div class="stat-item" style="color:#ff9800;">
+      <div class="stat-num">{{ flagged }}</div>
+      <div class="stat-lbl">Flagged</div>
+    </div>
+  </div>
+
+  <div style="display:flex; gap:10px; justify-content: center;">
+    <a href="{% url 'attempt_review' attempt.id %}"
+      style="padding:12px 24px; background:white; border:1px solid #ddd; color:#333; border-radius:8px; text-decoration:none; font-weight:600;">Review
+      Answers</a>
+    <a href="{% url 'package_analysis' attempt.package.slug %}"
+      style="padding:12px 24px; background:#0765f3; color:white; border-radius:8px; text-decoration:none; font-weight:600;">Detailed
+      Analysis</a>
+  </div>
+
+  <div style="margin-top:20px;">
+    <a href="{% url 'dashboard' %}" style="font-size:14px; color:#777;">Back to Dashboard</a>
+  </div>
+</div>
 {% endblock %}

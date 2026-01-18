@@ -1,10 +1,136 @@
 {% extends "core/base.html" %}
 {% block title %}Login | Tryout{% endblock %}
+
 {% block content %}
-  <h1>Login</h1>
+<style>
+  .login-container {
+    max-width: 400px;
+    margin: 40px auto;
+    padding: 30px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid #f0f0f0;
+  }
+
+  .form-group {
+    margin-bottom: 20px;
+  }
+
+  .form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #444;
+  }
+
+  .form-control {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+  }
+
+  .btn-primary {
+    width: 100%;
+    padding: 12px;
+    background: #0765f3;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 16px;
+  }
+
+  .btn-primary:hover {
+    background: #0551d8;
+  }
+
+  .divider {
+    margin: 20px 0;
+    text-align: center;
+    border-bottom: 1px solid #eee;
+    line-height: 0.1em;
+    color: #999;
+  }
+
+  .divider span {
+    background: #fff;
+    padding: 0 10px;
+  }
+
+  .btn-google {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    text-align: center;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: white;
+    color: #333;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .btn-google:hover {
+    background: #f8f8f8;
+  }
+
+  .links {
+    margin-top: 15px;
+    text-align: center;
+    font-size: 13px;
+  }
+
+  .links a {
+    color: #0765f3;
+    text-decoration: none;
+  }
+</style>
+
+<div class="login-container">
+  <h2 style="text-align:center; margin-top:0; color:#333;">Welcome Back</h2>
+
   <form method="post">
     {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Masuk</button>
+
+    <div class="form-group">
+      <label>Username or Email</label>
+      <input type="text" name="username" class="form-control" required autofocus>
+    </div>
+
+    <div class="form-group">
+      <div style="display:flex; justify-content:space-between;">
+        <label>Password</label>
+        <a href="#" style="font-size:12px; color:#0765f3; text-decoration:none;">Forgot?</a>
+      </div>
+      <input type="password" name="password" class="form-control" required>
+    </div>
+
+    <button type="submit" class="btn-primary">Sign In</button>
   </form>
+
+  <div class="login-footer">
+    <a href="#">Forgot password?</a>
+    <span>&bull;</span>
+    <a href="{% url 'signup' %}">Sign Up</a>
+  </div>
+
+  <div class="divider">
+    <span>OR</span>
+  </div>
+
+  <!-- Placeholder for Google Auth (Needs django-allauth setup) -->
+  <button type="button" class="btn-google" onclick="alert('Fitur Login Google membutuhkan setup API Key.')">
+    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" height="18">
+    Sign in with Google
+  </button>
+</div>
 {% endblock %}

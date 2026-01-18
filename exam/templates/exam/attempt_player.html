@@ -3,831 +3,504 @@
 
 {% block content %}
 <style>
-  *, *::before, *::after { box-sizing: border-box; }
-  
-  .layout { 
-    display: flex; 
-    gap: 10px; 
-    align-items: flex-start; 
-  }
-  
-  .main { 
-    flex: 1; 
-    border: 1px solid #ddd; 
-    padding: 16px; 
-    border-radius: 5px; 
-    max-height: calc(100vh - 95px); 
-    overflow-y: auto; 
-    font-family: 'Open Sans', Helvetica, Arial, sans-serif;
-  }
-  
-  .sidebar { 
-    width: 280px; 
-    border: 1px solid #ddd; 
-    padding: 12px; 
-    border-radius: 5px; 
-    max-height: calc(100vh - 24px); 
-    overflow-y: auto; 
-  }
-  
-  .topbar { 
-    display: flex; 
-    align-items: center; 
-    justify-content: space-between; 
-    position: sticky; 
-    top: 0; 
-    background: #ffffff; 
-    z-index: 10; 
-    padding: 5px 0; 
-    border-bottom: 1px solid #eee; 
-    margin-bottom: 5px; 
-  }
-  
-  .grid { 
-    display: grid; 
-    grid-template-columns: repeat(5, 1fr); 
-    gap: 4px; 
-  }
-  
-  .qbtn { 
-    display: flex; 
-    align-items: center; 
-    justify-content: center; 
-    height: 36px; 
-    border-radius: 4px; 
-    border: 1px solid #ccc; 
-    text-decoration: none; 
-    font-weight: 600; 
-    transition: transform 0.1s ease, box-shadow 0.1s ease;
-    cursor: pointer;
-  }
-  
-  .qbtn:hover:not(:disabled) {
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  }
-  
-  .qbtn:active:not(:disabled) {
-    transform: translateY(0);
+  /* Layout & Grid */
+  .player-layout {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
   }
 
-  .blank-qbtn { background: #ff0000; border-color: #ff0000; color: #ffffff; }
-  .answered-qbtn { background: #02c248; border-color: #02c248; color: #ffffff; }
-  .flagged-qbtn { background: #e7b900; border-color: #e7b900; color: #ffffff; }
-  .current-qbtn { background: #0765f3; border-color: #0765f3; color: #ffffff; }
-
-  .option { 
-    border: 1px solid #ddd; 
-    padding: 12px; 
-    border-radius: 5px; 
-    margin-bottom: 10px;
-    transition: all 0.2s ease;
-    position: relative;
-  }
-  
-  .option:hover {
-    background: #f8f8f8;
-    border-color: #bbb;
-  }
-  
-  .pill { 
-    border: 1px solid #ddd; 
-    padding: 6px 10px; 
-    border-radius: 5px; 
-  }
-  
-  .actions { 
-    display: flex; 
-    gap: 10px; 
-    flex-wrap: wrap; 
-    margin-top: 14px; 
-  }
-
-  .attempt-player-action-btn {
-    padding: 8px 12px;
-    border-radius: 5px;
+  .player-main {
+    flex: 1;
+    background: white;
     border: 1px solid #ddd;
-    background: #fff;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    font-size: 14px;
-  }
-  
-  .attempt-player-action-btn:hover:not(:disabled) {
-    background-color: #f1f1f1;
-    border-color: #bbbbbb;
-  }
-  
-  .attempt-player-action-btn:active:not(:disabled) {
-    background-color: #dddddd;
-  }
-  
-  .attempt-player-action-btn:disabled { 
-    opacity: 0.5; 
-    cursor: not-allowed; 
-  }
-  
-  .attempt-player-action-btn.flagged {
-    background-color: #ffe448;
-    color: #000;
-  }
-  
-  .attempt-player-action-btn.primary {
-    background: #0765f3;
-    color: #fff;
-    border-color: #0765f3;
+    border-radius: 8px;
+    padding: 24px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   }
 
-  .attempt-player-action-btn.primary:hover:not(:disabled) {
+  .player-sidebar {
+    width: 300px;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 16px;
+    max-height: calc(100vh - 100px);
+    overflow-y: auto;
+    position: sticky;
+    top: 80px;
+  }
+
+  /* Topbar */
+  .player-topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: white;
+    padding: 15px 20px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  }
+
+  .timer-box {
+    background: #e3f2fd;
+    color: #0765f3;
+    font-weight: 700;
+    font-size: 18px;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .timer-warning {
+    background: #fff3e0;
+    color: #ef6c00;
+  }
+
+  .timer-danger {
+    background: #ffebee;
+    color: #c62828;
+    animation: pulse 1s infinite;
+  }
+
+  @keyframes pulse {
+    0% {
+      opacity: 1;
+    }
+
+    50% {
+      opacity: 0.6;
+    }
+
+    100% {
+      opacity: 1;
+    }
+  }
+
+  /* Grid Buttons */
+  .grid-container {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+    margin-top: 10px;
+  }
+
+  .grid-btn {
+    height: 36px;
+    border: 1px solid #ddd;
+    background: #f8f9fa;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .grid-btn:hover {
+    background: #eee;
+  }
+
+  .grid-btn.current {
+    border: 2px solid #0765f3;
+  }
+
+  .grid-btn.answered {
+    background: #4caf50;
+    color: white;
+    border-color: #4caf50;
+  }
+
+  .grid-btn.flagged {
+    background: #ffc107;
+    color: black;
+    border-color: #ffc107;
+  }
+
+  /* Question Area */
+  .question-stem {
+    font-size: 16px;
+    line-height: 1.6;
+    margin-bottom: 20px;
+    white-space: pre-wrap;
+  }
+
+  .option-label {
+    display: flex;
+    align-items: flex-start;
+    padding: 12px;
+    border: 1px solid #eee;
+    margin-bottom: 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .option-label:hover {
+    background: #f9f9f9;
+    border-color: #ccc;
+  }
+
+  .option-label input {
+    margin-top: 4px;
+    margin-right: 12px;
+  }
+
+  /* Reveal Styles (Learn Mode) */
+  .reveal .opt-correct {
+    background: #e8f5e9;
+    border-color: #66bb6a;
+  }
+
+  .reveal .opt-wrong {
+    background: #ffebee;
+    border-color: #ef5350;
+  }
+
+  /* Buttons */
+  .action-bar {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 30px;
+    border-top: 1px solid #eee;
+    padding-top: 20px;
+  }
+
+  .btn-nav {
+    padding: 10px 20px;
+    border: 1px solid #ddd;
+    background: white;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .btn-nav:hover:not(:disabled) {
+    background: #f1f1f1;
+  }
+
+  .btn-nav:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .btn-flag {
+    color: #f57f17;
+  }
+
+  .btn-finish {
+    width: 100%;
+    margin-top: 20px;
+    background: #0765f3;
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+
+  .btn-finish:hover {
     background: #0551d8;
   }
-
-  /* Reveal states - ALWAYS show correct answer in green */
-  .reveal .opt-correct { 
-    border-color: #4bd37b !important; 
-    background: #e9fff1 !important; 
-  }
-  
-  /* Show wrong selected answer in red */
-  .reveal .opt-wrong { 
-    border-color: #ff8080 !important; 
-    background: #ffefef !important; 
-  }
-  
-  .tag { 
-    margin-left: 8px; 
-    font-size: 12px; 
-    padding: 2px 8px; 
-    border: 1px solid #ddd; 
-    border-radius: 999px; 
-  }
-  
-  /* Hide tags until reveal */
-  .reveal-only { 
-    display: none; 
-  }
-  
-  /* Show all tags when revealed */
-  .reveal .reveal-only { 
-    display: inline-block; 
-  }
-
-  /* Save status indicator */
-  .save-status {
-    font-size: 13px;
-    font-weight: normal;
-    transition: color 0.3s ease;
-  }
-  
-  .save-status.saving { color: #666; }
-  .save-status.saved { color: #02c248; }
-  .save-status.error { color: #ff0000; }
 
   /* Modal */
   .modal-overlay {
     display: none;
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.4);
-    z-index: 999;
-    animation: fadeIn 0.2s ease;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
   }
-  
-  .modal-overlay.show {
-    display: block;
-  }
-  
-  .modal-content {
-    background: #fff;
-    max-width: 420px;
-    margin: 10% auto;
+
+  .modal-box {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
     padding: 24px;
     border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    width: 90%;
+    max-width: 400px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   }
-  
-  @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-
-  /* Responsive */
-  @media (max-width: 768px) {
-    .layout { flex-direction: column; }
-    .sidebar { width: 100%; }
-    .grid { grid-template-columns: repeat(10, 1fr); gap: 3px; }
-    .qbtn { height: 32px; font-size: 13px; }
-    .actions { justify-content: center; }
-  }
-
-  #timer {
-    font-weight: bold;
-    transition: color 0.3s ease;
-  }
-
-  /* < 1 menit */
-  #timer.warning {
-    color: #e67e22; /* oranye */
-  }
-
-  /* < 10 detik */
-  #timer.danger {
-    color: #e74c3c; /* merah */
-    animation: blink 1s infinite;
-  }
-
-  @keyframes blink {
-    0%   { opacity: 1; }
-    50%  { opacity: 0.2; }
-    100% { opacity: 1; }
-  }
-
 </style>
 
-<div class="topbar" style="font-family: 'Roboto', sans-serif;">
+<div class="player-topbar">
   <div>
-    <b>{{ attempt.package.title }}</b> <small>Mode: {{ attempt.mode }} | Question {{ idx|add:1 }}/{{ counts.total }}</small>
+    <h2 style="margin:0; font-size:18px;">{{ attempt.package.title }}</h2>
+    <span style="font-size:13px; color:#666;">Mode: {{ attempt.mode }} &bull; Question {{ idx|add:1 }}/{{ counts.total }}</span>
   </div>
-  <div style="width:150px;">
-    <span id="save-status" style="margin-left:10px; font-weight:normal;"></span>
+  <div style="display:flex; align-items:center; gap:15px;">
+    <span id="save-status" style="font-size:12px; color:#666;"></span>
+    <div id="timer" class="timer-box" data-seconds="{{ time_info.remaining_seconds }}">00:00</div>
   </div>
-  <div class="pill" style="width:70px; display: flex; justify-content: center; align-items: center;">
-    <b id="timer" data-seconds="{{ time_info.remaining_seconds }}">00:00</b>
-  </div>
-
 </div>
 
-<div class="layout">
-  <aside class="sidebar">
-    <h3 style="margin-top:0; font-family: 'Roboto', sans-serif;">Navigation</h3>
-
-    <div style="font-size:12px; line-height:1.6; margin-bottom:10px;">
-      <div style="font-family: 'Roboto', sans-serif;">🟥Blank: {{ counts.blank }} 🟩Answered: {{ counts.answered }} 🟨Flagged: {{ counts.flagged }}</div>
-    </div>
-
-    <div class="grid">
-      {% for g in grid %}
-        <button
-          type="submit"
-          form="answer-form"
-          class="qbtn {{ g.status }}-qbtn"
-          name="jump"
-          value="{{ g.idx }}"
-          style="cursor:pointer;"
-        >
-          {{ g.num }}
-        </button>
-      {% endfor %}
-    </div>
-    <br>
-    <div>
-      <button 
-        class="attempt-player-action-btn primary" 
-        type="button" 
-        onclick="openSubmitModal()"
-        style="width:100%; padding:10px; border-radius:5px;"
-      >
-        Finish Attempt
-      </button>
-
-    </div>
-
-  </aside>
-
-  <section class="main">
-    <!-- <h2 style="margin-top:0; font-family: 'Roboto', sans-serif;">Soal Nomor {{ idx|add:1 }}</h2> -->
-    {% if current_question.section %}
-      <div style="font-family: 'Roboto', sans-serif; color:#2f6bff; font-weight:600; margin-bottom:10px;">
-        {{ current_question.section.title }}
-      </div>
-    {% endif %}
-
-    <div style="margin-bottom:14px;">
-      <div style="white-space:pre-line; font-family: 'Open Sans', Helvetica, Arial, sans-serif;">{{ idx|add:1 }}. {{ current_question.stem }}</div>
-
-      {% if current_question.image %}
-        <div style="margin-top:10px;">
-          <img src="{{ current_question.image.url }}" style="max-width:400px; border-radius:10px; border:1px solid #eee;">
-        </div>
-      {% endif %}
-
-      {% if current_question.audio %}
-        <div style="margin-top:10px;">
-          <audio controls src="{{ current_question.audio.url }}" style="width:100%;"></audio>
-        </div>
-      {% endif %}
-    </div>
-
+<div class="player-layout">
+  <!-- QUESTION AREA -->
+  <div class="player-main">
     <form method="post" id="answer-form">
       {% csrf_token %}
 
+      {% if current_question.section %}
+      <div style="margin-bottom:10px; color:#0765f3; font-weight:600; font-size:14px;">
+        SECTION: {{ current_question.section.title }}
+      </div>
+      {% endif %}
+
+      <div class="question-stem"><span style="font-weight:bold; color:#0765f3; margin-right:5px;">
+        {{ idx|add:1 }}.</span>{{ current_question.stem }}</div>
+
+      {% if current_question.image %}
+      <img src="{{ current_question.image.url }}"
+        style="max-width:100%; border-radius:8px; border:1px solid #eee; margin-bottom:20px;">
+      {% endif %}
+      {% if current_question.audio %}
+      <audio controls src="{{ current_question.audio.url }}" style="width:100%; margin-bottom:20px;"></audio>
+      {% endif %}
+
       <div id="options-wrap">
         {% if attempt.mode == "LEARN" %}
-          {% for c in choices_view %}
-            <label class="option"
-                  data-correct="{% if c.is_correct %}1{% else %}0{% endif %}"
-                  style="display: block; cursor:pointer;">
-
-              {% if current_question.answer_type == "MULTI" %}
-                <input type="checkbox" name="choice" value="{{ c.id }}" {% if c.is_selected %}checked{% endif %}>
-              {% else %}
-                <input type="radio" name="choice" value="{{ c.id }}" {% if c.is_selected %}checked{% endif %}>
-              {% endif %}
-
-              <span>{{ c.label }}.</span>
-              {% if c.text %}
-                <span>{{ c.text }}</span>
-              {% endif %}
-              {% if c.image %}
-                <span>
-                  <img src="{{ c.image.url }}" style="max-width:250px; border-radius:6px; border:1px solid #ddd;">
-                </span>
-              {% endif %}
-              {% if c.audio %}
-                <span>
-                  <audio controls preload="none" style="height:35px;">
-                    <source src="{{ c.audio.url }}">
-                    Your browser does not support the audio element.
-                  </audio>
-                </span>
-              {% endif %}
-
-              <!-- Badge evaluasi: default hidden -->
-              {% if current_question.answer_type != "WEIGHTED" %}
-                <span class="tag correct-badge" style="display:none;">✅</span>
-                <span class="tag wrong-badge" style="display:none;">❌</span>
-              {% else %}
-                <span class="tag point-badge" style="display:none;">({{ c.points }} poin)</span>
-                {% if c.is_correct %}
-                  <span class="tag ideal-badge" style="display:none;">⭐</span>
-                {% endif %}
-              {% endif %}
-            </label>
-          {% endfor %}
-        {% else %}
-
-          <!-- TRYOUT: versi lama -->
+        <!-- LEARN MODE: Pre-calculated view for instant feedback -->
+        {% for c in choices_view %}
+        <label class="option-label" data-is-correct="{{ c.is_correct|yesno:'true,false' }}" data-id="{{ c.id }}">
           {% if is_multi %}
-            {% for c in current_question.choices.all %}
-              <label class="option" style="display:block; cursor:pointer;">
-                <input type="checkbox" name="choice" value="{{ c.id }}"
-                      {% if c.id in selected_ids %}checked{% endif %}>
-                <span>{{ c.label }}.</span>
-                {% if c.text %}
-                  <span>{{ c.text }}</span>
-                {% endif %}
-                {% if c.image %}
-                  <span style="display:block;">
-                    <img src="{{ c.image.url }}" style="max-width:250px; border-radius:6px; border:1px solid #ddd;">
-                  </span>
-                {% endif %}
-                {% if c.audio %}
-                  <span>
-                    <audio controls preload="none" style="height:35px;">
-                      <source src="{{ c.audio.url }}">
-                      Your browser does not support the audio element.
-                    </audio>
-                  </span>
-                {% endif %}
-              </label>
-            {% endfor %}
+          <input type="checkbox" name="choice" value="{{ c.id }}" {% if c.is_selected %}checked{% endif %}>
           {% else %}
-            {% for c in current_question.choices.all %}
-              <label class="option" style="display:block; cursor:pointer;">
-                <input type="radio" name="choice" value="{{ c.id }}"
-                      {% if c.id in selected_ids %}checked{% endif %}>
-                <span>{{ c.label }}.;</span>
-                {% if c.text %}
-                  <span>{{ c.text }}</span>
-                {% endif %}
-                {% if c.image %}
-                  <span style="display:block;">
-                    <img src="{{ c.image.url }}" style="max-width:250px; border-radius:6px; border:1px solid #ddd;">
-                  </span>
-                {% endif %}
-                {% if c.audio %}
-                  <span>
-                    <audio controls preload="none" style="height:35px;">
-                      <source src="{{ c.audio.url }}">
-                      Your browser does not support the audio element.
-                    </audio>
-                  </span>
-                {% endif %}
-              </label>
-            {% endfor %}
+          <input type="radio" name="choice" value="{{ c.id }}" {% if c.is_selected %}checked{% endif %}>
           {% endif %}
+
+          <div style="flex:1;">
+            {% if c.label %}<b>{{ c.label }}.</b>{% endif %}
+            {{ c.text }}
+            {% if c.image %}<br><img src="{{ c.image.url }}" style="max-height:150px; margin-top:5px;">{% endif %}
+            {% if c.audio %}
+            <br>
+            <audio controls src="{{ c.audio.url }}" style="height:30px; margin-top:5px;"></audio>
+            {% endif %}
+          </div>
+
+          <!-- Badges for Learn Mode -->
+          <span class="badge-feedback" style="display:none; margin-left:10px;"></span>
+        </label>
+        {% endfor %}
+
+        <button type="button" class="btn-nav" onclick="toggleExplanation()" style="margin-top:10px;">
+          👁️ Show/Hide Answer
+        </button>
+
+        <div id="explanation-box"
+          style="display:none; margin-top:15px; background:#f9f9f9; padding:15px; border-radius:6px; border-left:4px solid #0765f3;">
+          <b>Pembahasan:</b><br>
+          {{ current_question.explanation|default:"Tidak ada pembahasan."|linebreaksbr }}
+        </div>
+
+        {% else %}
+        <!-- TRYOUT MODE -->
+        {% for c in current_question.choices.all %}
+        <label class="option-label">
+          {% if is_multi %}
+          <input type="checkbox" name="choice" value="{{ c.id }}" {% if c.id in selected_ids %}checked{% endif %}>
+          {% else %}
+          <input type="radio" name="choice" value="{{ c.id }}" {% if c.id in selected_ids %}checked{% endif %}>
+          {% endif %}
+          <div style="flex:1;">
+            {% if c.label %}<b>{{ c.label }}.</b>{% endif %}
+            {{ c.text }}
+            {% if c.image %}<br><img src="{{ c.image.url }}" style="max-height:150px; margin-top:5px;">{% endif %}
+            {% if c.audio %}
+            <br>
+            <audio controls src="{{ c.audio.url }}" style="height:30px; margin-top:5px;"></audio>
+            {% endif %}
+          </div>
+        </label>
+        {% endfor %}
         {% endif %}
       </div>
 
+      <div class="action-bar">
+        <button type="submit" name="nav" value="prev" class="btn-nav"
+          {% if idx == 0 %}disabled{% endif %}>
+          &larr; Prev
+        </button>
 
+        <div style="display:flex; gap:10px;">
+          <button type="submit" name="action" value="clear" class="btn-nav" title="Clear Answer"
+            style="color:red;">Clear Answer</button>
 
-      <!-- EXPLANATION ANSWER BUTTON -->
-      {% if attempt.mode == "LEARN" %}
-        <div style="margin-top: 16px;">
-          <button class="attempt-player-action-btn" type="button" onclick="toggleExplanation()" id="toggle-expl-btn">
-            Show Answer
+          <button type="submit" name="action" value="toggle_flag" class="btn-nav btn-flag" title="Flag Question">
+            {% if answer_obj.flagged %}🚩 Unflag{% else %}🏳️ Flag{% endif %}
           </button>
-
-          <div id="explanation-box" style="display:none; margin-top:12px; padding:12px; border:1px solid #ddd; border-radius:8px; background:#fafafa;">
-            {% if current_question.explanation %}
-              <div style="white-space: pre-line;">{{ current_question.explanation }}</div>
-            {% else %}
-              <i>No explanation yet</i>
-            {% endif %}
-          </div>
         </div>
-      {% endif %}
-      
-      <!-- ACTION BUTTONS -->
-      <div class="actions" style="padding-top: 20px;">
-        <button 
-          class="attempt-player-action-btn" 
-          style="min-width: 100px;" 
-          type="submit" 
-          name="nav" 
-          value="prev" 
-          {% if idx == 0 %}disabled{% endif %}
-        >
-          ← Previous
-        </button>
-        
-        <button 
-          class="attempt-player-action-btn" 
-          style="min-width: 135px;" 
-          type="submit" 
-          name="action" 
-          value="clear"
-        >
-          🗑️ Clear Answer
-        </button>
-        
-        <button 
-          class="attempt-player-action-btn {% if answer_obj.flagged %}flagged{% endif %}" 
-          style="min-width: 135px;" 
-          type="submit" 
-          name="action" 
-          value="toggle_flag"
-        >
-          {% if answer_obj.flagged %}🚩 Unflag{% else %}🚩 Flag{% endif %}
-        </button>
-        
-        <button 
-          class="attempt-player-action-btn" 
-          style="min-width: 100px;" 
-          type="submit" 
-          name="nav" 
-          value="next" 
-          {% if idx == counts.total|add:"-1" %}disabled{% endif %}
-        >
-          Next →
+
+        <button type="submit" name="nav" value="next" class="btn-nav"
+          {% if idx == counts.total|add:"-1" %}disabled{% endif %}>
+          Next &rarr;
         </button>
       </div>
-      
+
     </form>
-    
-    <!-- Submit Modal -->
-    <div id="submit-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:999;">
-      <div style="background:#fff; max-width:420px; margin:10% auto; padding:20px; border-radius:5px;">
-        <h2>Submit Confirmation</h2>
-        <ul>
-          <li>Total: {{ counts.total }}</li>
-          <li>Answered: {{ counts.answered }}</li>
-          <li>Blank: {{ counts.blank }}</li>
-          <li>Flagged: {{ counts.flagged }}</li>
-        </ul>
+  </div>
 
-        <div style="display:flex; gap:10px; margin-top:16px;">
-          <form method="post" action="{% url 'attempt_submit' attempt.id %}">
-            {% csrf_token %}
-            <button class="attempt-player-action-btn" type="submit">Submit</button>
-          </form>
-          <button class="attempt-player-action-btn" type="button" onclick="closeSubmitModal()">Batal</button>
-        </div>
-      </div>
+  <!-- SIDEBAR -->
+  <aside class="player-sidebar">
+    <div style="margin-bottom:10px; font-size:12px; display:flex; gap:10px; flex-wrap:wrap;">
+      <span style="color:#4caf50;">◼ Answered: {{ counts.answered }}</span>
+      <span style="color:#ffc107;">◼ Flagged: {{ counts.flagged }}</span>
+      <span style="color:#999;">◼ Blank: {{ counts.blank }}</span>
     </div>
 
-  </section>
+    <div class="grid-container">
+      {% for g in grid %}
+      <button type="submit" form="answer-form" name="jump" value="{{ g.idx }}"
+        class="grid-btn {{ g.status }} {% if g.idx == idx %}current{% endif %}">
+        {{ g.num }}
+      </button>
+      {% endfor %}
+    </div>
 
+    <button type="button" class="btn-finish" onclick="openModal()">Finish Attempt</button>
+  </aside>
 </div>
 
+<!-- Submit Modal -->
+<div id="submit-modal" class="modal-overlay">
+  <div class="modal-box">
+    <h3>Finish Attempt?</h3>
+    <p>Are you sure you want to submit?</p>
+    <ul>
+      <li>Answered: {{ counts.answered }}</li>
+      <li>Flagged: {{ counts.flagged }}</li>
+      <li>Blank: {{ counts.blank }}</li>
+    </ul>
+    <div style="display:flex; gap:10px; margin-top:20px;">
+      <form action="{% url 'attempt_submit' attempt.id %}" method="post" style="flex:1;">
+        {% csrf_token %}
+        <button type="submit" class="btn-finish" style="margin:0;">Yes, Submit</button>
+      </form>
+      <button onclick="closeModal()" class="btn-nav" style="flex:1;">Cancel</button>
+    </div>
+  </div>
+</div>
 
-<!-- Scripts -->
+<!-- SCRIPTS -->
 <script>
-  // countdown visual (server tetap sumber kebenaran)
-  (function(){
-    let s = parseInt(document.getElementById("timer").textContent || "0", 10);
-    const el = document.getElementById("timer");
-    setInterval(() => {
-      if (s > 0) s -= 1;
-      el.textContent = String(s);
-    }, 1000);
-  })();
-</script>
-
-<script>
-  (function(){
-    const timerEl = document.getElementById("timer");
-    let s = parseInt(timerEl.textContent || "0", 10);
-
-    const hbUrl = "{% url 'attempt_heartbeat' attempt.id %}";
-    const form = document.getElementById("answer-form");
-    const csrftoken = form.querySelector('input[name="csrfmiddlewaretoken"]').value;
-
-    // visual countdown setiap 1 detik (UI)
-    setInterval(() => {
-      if (s > 0) s -= 1;
-      timerEl.textContent = String(s);
-    }, 1000);
-
-    // heartbeat ke server tiap 5 detik (source of truth)
-    async function heartbeat(){
-      try{
-        const res = await fetch(hbUrl, {
-          method: "POST",
-          headers: { "X-CSRFToken": csrftoken },
-          body: new FormData() // kosong
-        });
-        const data = await res.json();
-        if (!data.ok) return;
-
-        s = parseInt(data.remaining_seconds, 10);
-
-        // TRYOUT: kalau expired, arahkan ke submit confirm
-        if (data.mode === "TRYOUT" && data.expired) {
-          if (window.__disableTryoutUnloadWarning) window.__disableTryoutUnloadWarning();
-            window.location.href = "{% url 'attempt_submit' attempt.id %}";
-        }
-
-        // LEARN: kalau expired (optional) -> bisa juga arahkan submit,
-        // tapi biasanya mode belajar tidak auto-submit. Kamu bisa pilih:
-        // if (data.mode === "LEARN" && data.expired) window.location.href = "{% url 'attempt_submit' attempt.id %}";
-      } catch(e){
-        // ignore
-      }
-    }
-
-    setInterval(heartbeat, 5000);
-  })();
-</script>
-
-<script>
-  (function(){
-    const form = document.getElementById("answer-form");
-    if(!form) return;
-
-    const idx = "{{ idx }}";
-    const url = "{% url 'attempt_autosave' attempt.id %}";
-    const csrftoken = form.querySelector('input[name="csrfmiddlewaretoken"]').value;
-
-    const statusEl = document.getElementById("save-status");
-
-    let t = null;
-
-    async function autosave(){
-      try{
-        if(statusEl) statusEl.textContent = "Saving...";
-        const fd = new FormData(form);
-        fd.set("idx", idx);
-
-        const res = await fetch(url, {
-          method: "POST",
-          headers: { "X-CSRFToken": csrftoken },
-          body: fd,
-        });
-        const data = await res.json();
-
-        if(data && data.expired){
-          // tryout habis -> paksa ke submit
-        if (window.__disableTryoutUnloadWarning) window.__disableTryoutUnloadWarning();
-          window.location.href = "{% url 'attempt_submit' attempt.id %}";
-          return;
-        }
-
-        if(statusEl) statusEl.textContent = "Saved ✅";
-        setTimeout(() => { if(statusEl) statusEl.textContent = ""; }, 1200);
-      }catch(e){
-        if(statusEl) statusEl.textContent = "Gagal menyimpan (cek koneksi)";
-      }
-    }
-
-    form.addEventListener("change", (e) => {
-      if(e.target && e.target.name === "choice"){
-        clearTimeout(t);
-        t = setTimeout(autosave, 200); // debounce 200ms
-      }
-    });
-  })();
-  </script>
-
-<script>
-  (function(){
-    const mode = "{{ attempt.mode }}";
-    if (mode !== "TRYOUT") return;
-
-    let allowNav = false;
-
-    function beforeUnloadHandler(e){
-      if (allowNav) return;
-      e.preventDefault();
-      e.returnValue = "";
-    }
-
-    window.addEventListener("beforeunload", beforeUnloadHandler);
-
-    // Anggap semua submit form di halaman ini sebagai navigasi internal
-    document.addEventListener("submit", function(){
-      allowNav = true;
-      window.removeEventListener("beforeunload", beforeUnloadHandler);
-    }, true);
-
-    // Anggap semua klik link internal (same-origin) sebagai navigasi internal
-    document.addEventListener("click", function(e){
-      const a = e.target.closest && e.target.closest("a");
-      if (!a) return;
-
-      // only same-origin navigations
-      try{
-        const url = new URL(a.href, window.location.href);
-        if (url.origin === window.location.origin) {
-          allowNav = true;
-          window.removeEventListener("beforeunload", beforeUnloadHandler);
-        }
-      }catch(_){}
-    }, true);
-
-    // Expose helper utk redirect via JS (timer expired dll)
-    window.__disableTryoutUnloadWarning = function(){
-      allowNav = true;
-      window.removeEventListener("beforeunload", beforeUnloadHandler);
-    };
-  })();
-</script>
-
-<script>
-  function openSubmitModal(){
-    if (window.__disableTryoutUnloadWarning) window.__disableTryoutUnloadWarning();
-    document.getElementById("submit-modal").style.display = "block";
-  }
-  function closeSubmitModal(){
-    document.getElementById("submit-modal").style.display = "none";
-  }
-</script>
-
-<script>
-  function showExplanation(){
-    const box = document.getElementById("explanation-box");
-    const btn = document.getElementById("toggle-expl-btn");
-    const opt = document.getElementById("options-wrap");
-    if(!box || !btn) return;
-
-    box.style.display = "block";
-    btn.textContent = "Sembunyikan Pembahasan";
-    if(opt) opt.classList.add("reveal");
-  }
-
-  function hideExplanation(){
-    const box = document.getElementById("explanation-box");
-    const btn = document.getElementById("toggle-expl-btn");
-    const opt = document.getElementById("options-wrap");
-    if(!box || !btn) return;
-
-    box.style.display = "none";
-    btn.textContent = "Tampilkan Pembahasan";
-    if(opt) opt.classList.remove("reveal");
-  }
-
-  function toggleExplanation(){
-    const box = document.getElementById("explanation-box");
-    const btn = document.getElementById("toggle-expl-btn");
-    const wrap = document.getElementById("options-wrap");
-
-    if(!box || !btn || !wrap) return;
-
-    const visible = box.style.display === "block";
-
-    if(!visible){
-      box.style.display = "block";
-      btn.textContent = "Hide Answer";
-      applyLearnEvaluation();   // 🔥 EVALUASI DI SINI
-    } else {
-      box.style.display = "none";
-      btn.textContent = "Show Answer";
-      wrap.classList.remove("reveal");
-
-      // Reset semua warna & badge
-      wrap.querySelectorAll("label.option").forEach(label => {
-        label.classList.remove("opt-correct", "opt-wrong");
-        const cb = label.querySelector(".correct-badge");
-        const wb = label.querySelector(".wrong-badge");
-        if(cb) cb.style.display = "none";
-        if(wb) wb.style.display = "none";
-      });
-    }
-  }
-</script>
-
-<script>
-  function applyLearnEvaluation(){
-    const wrap = document.getElementById("options-wrap");
-    if(!wrap) return;
-
-    const answerType = "{{ current_question.answer_type }}"; // "WEIGHTED" / "MULTI" / etc
-
-    // aktifkan mode reveal (untuk CSS reveal-only kalau kamu masih pakai)
-    wrap.classList.add("reveal");
-
-    const labels = wrap.querySelectorAll("label.option");
-
-    labels.forEach(label => {
-      // reset state
-      label.classList.remove("opt-correct", "opt-wrong");
-
-      const input = label.querySelector('input[name="choice"]');
-      const checked = !!(input && input.checked);
-
-      const isCorrect = label.dataset.correct === "1";
-
-      // badges
-      const correctBadge = label.querySelector(".correct-badge");
-      const wrongBadge   = label.querySelector(".wrong-badge");
-      const pointBadge   = label.querySelector(".point-badge");
-      const idealBadge   = label.querySelector(".ideal-badge");
-
-      // reset all badges
-      if(correctBadge) correctBadge.style.display = "none";
-      if(wrongBadge)   wrongBadge.style.display   = "none";
-      if(pointBadge)   pointBadge.style.display   = "none";
-      if(idealBadge)   idealBadge.style.display   = "none";
-
-      // ===== WEIGHTED =====
-      if(answerType === "WEIGHTED"){
-        if(pointBadge) pointBadge.style.display = "inline-block";
-        if(idealBadge) idealBadge.style.display = "inline-block";
-        return;
-      }
-
-      // ===== NON-WEIGHTED =====
-      // 1) kunci jawaban: semua opsi benar -> hijau + ✅
-      if(isCorrect){
-        label.classList.add("opt-correct");
-        if(correctBadge) correctBadge.style.display = "inline-block";
-      }
-
-      // 2) jika user memilih opsi salah -> merah + ❌ hanya untuk yang dipilih
-      if(checked && !isCorrect){
-        label.classList.add("opt-wrong");
-        if(wrongBadge) wrongBadge.style.display = "inline-block";
-      }
-    });
-  }
-</script>
-
-<script>
+  // --- TIMER LOGIC (Consolidated) ---
   (function () {
     const timerEl = document.getElementById("timer");
-    if (!timerEl) return;
-
     let remaining = parseInt(timerEl.dataset.seconds || "0", 10);
+    const mode = "{{ attempt.mode }}";
+    const hbUrl = "{% url 'attempt_heartbeat' attempt.id %}";
+    const submitUrl = "{% url 'attempt_submit' attempt.id %}";
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
-    function formatTime(sec) {
-      const m = Math.floor(sec / 60);
-      const s = sec % 60;
-      return String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
+    function formatTime(s) {
+      if (s < 0) s = 0;
+      const m = Math.floor(s / 60);
+      const sec = s % 60;
+      return String(m).padStart(2, '0') + ":" + String(sec).padStart(2, '0');
     }
 
-    function updateUI() {
+    function updateDisplay() {
       timerEl.textContent = formatTime(remaining);
 
-      timerEl.classList.remove("warning", "danger", "blink");
-
-      if (remaining <= 60 && remaining > 10) {
-        timerEl.classList.add("warning");
-      }
-
-      if (remaining <= 10 && remaining > 0) {
-        timerEl.classList.add("danger", "blink");
-      }
-
-      if (remaining <= 0) {
-        timerEl.textContent = "00:00";
-        timerEl.classList.add("danger");
-      }
+      // Styling
+      timerEl.className = "timer-box"; // reset
+      if (remaining < 60) timerEl.classList.add("timer-danger");
+      else if (remaining < 300) timerEl.classList.add("timer-warning");
     }
 
-    updateUI();
+    // Initial display
+    updateDisplay();
 
+    // Interval handler
     const interval = setInterval(() => {
-      if (remaining <= 0) {
-        clearInterval(interval);
-        return;
+      if (remaining > 0) {
+        remaining--;
+        updateDisplay();
+      } else {
+        // Expired
+        if (mode === "TRYOUT") {
+          clearInterval(interval);
+          // Auto submit or redirect
+          alert("Waktu Habis!");
+          window.location.href = submitUrl;
+        }
       }
-
-      remaining--;
-      updateUI();
     }, 1000);
+
+    // Heartbeat sync (every 30s)
+    setInterval(async () => {
+      try {
+        const fd = new FormData();
+        const res = await fetch(hbUrl, { method: "POST", headers: { "X-CSRFToken": csrfToken }, body: fd });
+        const data = await res.json();
+
+        if (data.ok) {
+          // Sync remaining time from server
+          remaining = data.remaining_seconds;
+          updateDisplay();
+
+          if (data.expired && mode === "TRYOUT") {
+            window.location.href = submitUrl;
+          }
+        }
+      } catch (e) { console.error("Heartbeat failed", e); }
+    }, 30000);
+
   })();
+
+  // --- AUTOSAVE ---
+  (function () {
+    const form = document.getElementById("answer-form");
+    const statusEl = document.getElementById("save-status");
+    const idx = "{{ idx }}";
+    const url = "{% url 'attempt_autosave' attempt.id %}";
+
+    let timeout;
+
+    form.addEventListener("change", (e) => {
+      if (e.target.name === "choice") {
+        clearTimeout(timeout);
+        statusEl.textContent = "Saving...";
+        timeout = setTimeout(autosave, 500);
+      }
+    });
+
+    async function autosave() {
+      try {
+        const fd = new FormData(form);
+        fd.append("idx", idx);
+        const res = await fetch(url, { method: "POST", body: fd });
+        const data = await res.json();
+        if (data.saved) {
+          statusEl.textContent = "Saved ✓";
+          setTimeout(() => statusEl.textContent = "", 2000);
+        }
+      } catch (e) {
+        statusEl.textContent = "Error saving!";
+      }
+    }
+  })();
+
+  // --- MODAL & Learn Mode ---
+  function openModal() { document.getElementById("submit-modal").style.display = "block"; }
+  function closeModal() { document.getElementById("submit-modal").style.display = "none"; }
+
+  function toggleExplanation() {
+    const box = document.getElementById("explanation-box");
+    const wrap = document.getElementById("options-wrap");
+
+    if (box.style.display === "none") {
+      box.style.display = "block";
+      wrap.classList.add("reveal"); // CSS handles coloring
+    } else {
+      box.style.display = "none";
+      wrap.classList.remove("reveal");
+    }
+  }
 </script>
-
-
-
 {% endblock %}

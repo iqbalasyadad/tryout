@@ -3,16 +3,14 @@ from django.db import transaction
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.db.models import Q
+from django.http import JsonResponse
+from django.contrib import messages
+from django.urls import reverse
 
 from .models import Attempt, AttemptAnswer, Choice, Package, Question, UserPackage
 from .services import get_remaining_seconds
-
 from .scoring import score_attempt
-from .models import Question
-from django.http import JsonResponse
-
-from django.contrib import messages
-from django.urls import reverse
 
 def _require_package_access(request, package):
     """
@@ -26,22 +24,55 @@ def _require_package_access(request, package):
     return None
 
 def package_list(request):
-    packages = Package.objects.filter(is_active=True).select_related("category")
-    return render(request, "exam/package_list.html", {"packages": packages})
+    q = request.GET.get("q", "")
+    cat = request.GET.get("category", "")
+    
+    packages = Package.objects.filter(is_active=True).select_related("category").prefetch_related("sections")
+    
+    if q:
+        packages = packages.filter(
+            Q(title__icontains=q) | 
+            Q(category__name__icontains=q) |
+            Q(sections__title__icontains=q)
+        ).distinct()
+        
+    # Identifikasi paket yg sudah dibeli
+    purchased_ids = []
+    if request.user.is_authenticated:
+        purchased_ids = list(UserPackage.objects.filter(user=request.user, is_purchased=True).values_list("package_id", flat=True))
+
+    return render(request, "exam/package_list.html", {
+        "packages": packages,
+        "q": q,
+        "selected_cat": cat,
+        "purchased_ids": purchased_ids,
+    })
 
 
 def package_detail(request, slug):
-    package = get_object_or_404(Package.objects.select_related("category"), slug=slug, is_active=True)
+    package = get_object_or_404(Package.objects.select_related("category").prefetch_related("sections"), slug=slug, is_active=True)
     q_count = package.questions.filter(is_active=True).count()
 
     up = None
+    max_score = None
+    last_attempt_date = None
+
     if request.user.is_authenticated:
         up = UserPackage.objects.filter(user=request.user, package=package).first()
+        
+        # Get attempts stats
+        attempts = Attempt.objects.filter(user=request.user, package=package, status=Attempt.Status.SUBMITTED)
+        if attempts.exists():
+            from django.db.models import Max
+            max_score = attempts.aggregate(Max("score"))["score__max"]
+            last_attempt_date = attempts.latest("submitted_at").submitted_at
 
     return render(request, "exam/package_detail.html", {
         "package": package,
         "q_count": q_count,
         "up": up,
+        "max_score": max_score,
+        "last_attempt_date": last_attempt_date,
     })
 
 
@@ -126,9 +157,16 @@ def attempt_player(request, attempt_id: int):
     # timer info
     time_info = get_remaining_seconds(attempt)
 
-    if attempt.mode == Attempt.Mode.LEARN and attempt.last_active_at is None:
-        attempt.last_active_at = timezone.now()
-        attempt.save(update_fields=["last_active_at"])
+    if attempt.mode == Attempt.Mode.LEARN:
+        if attempt.last_active_at is None:
+             attempt.last_active_at = timezone.now()
+        else:
+             delta = (timezone.now() - attempt.last_active_at).total_seconds()
+             # Update elapsed if plausible (e.g. within 1 hour, to avoid huge jumps from sleep)
+             if 0 <= delta <= 3600:
+                 attempt.elapsed_seconds = min(attempt.duration_seconds, attempt.elapsed_seconds + delta)
+             attempt.last_active_at = timezone.now()
+        attempt.save(update_fields=["last_active_at", "elapsed_seconds"])
 
     # Auto-submit jika TRYOUT sudah habis
     if attempt.mode == Attempt.Mode.TRYOUT and time_info.is_expired:
@@ -574,4 +612,73 @@ def attempt_heartbeat(request, attempt_id: int):
         "remaining_seconds": time_info.remaining_seconds,
         "expired": time_info.is_expired,
         "mode": attempt.mode,
+    })
+
+
+@login_required
+def package_analysis(request, slug):
+    package = get_object_or_404(Package, slug=slug, is_active=True)
+    
+    # Ambil attempt terakhir yang sudah submitted
+    attempt = Attempt.objects.filter(
+        user=request.user, 
+        package=package, 
+        status=Attempt.Status.SUBMITTED
+    ).order_by("-submitted_at").first()
+    
+    if not attempt:
+        messages.warning(request, "Anda belum menyelesaikan tryout untuk paket ini.")
+        return redirect("package_detail", slug=slug)
+
+    # Calculate per-section score
+    # 1. Get all questions with sections
+    questions = Question.objects.filter(package=package, is_active=True).select_related("section")
+    
+    # 2. Get all answers for this attempt
+    answers = AttemptAnswer.objects.filter(attempt=attempt).prefetch_related("choices")
+    ans_map = {a.question_id: a for a in answers}
+
+    # Data structure: { "Section Name": { "correct": 0, "total": 0, "score": 0, "max_score": 0 } }
+    sections_data = {}
+    
+    total_correct = 0
+    total_questions = len(questions)
+
+    for q in questions:
+        sec_name = q.section.title if q.section else "General"
+        if sec_name not in sections_data:
+            sections_data[sec_name] = {"correct": 0, "total": 0, "score": 0, "max_score": 0}
+            
+        data = sections_data[sec_name]
+        data["total"] += 1
+        
+        # Scoring logic (simplified for standard SINGLE choice)
+        a = ans_map.get(q.id)
+        if a:
+            selected = set(a.choices.values_list("id", flat=True))
+            corrects = set(q.choices.filter(is_correct=True).values_list("id", flat=True))
+            
+            if selected and selected == corrects:
+                is_correct = True
+                data["correct"] += 1
+                total_correct += 1
+                
+    # Format for template
+    analysis_list = []
+    for name, data in sections_data.items():
+        score_pct = (data["correct"] / data["total"] * 100) if data["total"] > 0 else 0
+        analysis_list.append({
+            "name": name,
+            "correct": data["correct"],
+            "total": data["total"],
+            "score_pct": round(score_pct, 1)
+        })
+
+    return render(request, "exam/package_analysis.html", {
+        "package": package,
+        "attempt": attempt,
+        "analysis": analysis_list,
+        "total_correct": total_correct,
+        "total_questions": total_questions,
+        "overall_pct": round(total_correct / total_questions * 100, 1) if total_questions else 0
     })

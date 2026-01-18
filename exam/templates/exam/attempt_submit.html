@@ -1,19 +1,93 @@
 {% extends "core/base.html" %}
-{% block title %}Submit | {{ attempt.package.title }}{% endblock %}
+{% block title %}Confirm Submit - {{ attempt.package.title }}{% endblock %}
+
 {% block content %}
-  <h1>Konfirmasi Submit</h1>
-  <p><b>{{ attempt.package.title }}</b> ({{ attempt.mode }})</p>
+<style>
+  .confirm-card {
+    max-width: 500px;
+    margin: 60px auto;
+    background: white;
+    border-radius: 16px;
+    padding: 40px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.06);
+    text-align: center;
+    border: 1px solid #f0f0f0;
+  }
+  .warning-icon {
+    font-size: 48px;
+    margin-bottom: 20px;
+    display: inline-block;
+  }
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    margin: 30px 0;
+    text-align: center;
+  }
+  .stat-box {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 10px;
+  }
+  .stat-val { font-size: 24px; font-weight: 800; color: #333; }
+  .stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #777; margin-top: 5px; }
+  
+  .btn-submit {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    background: #0765f3;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .btn-submit:hover { background: #0551d8; box-shadow: 0 4px 12px rgba(7, 101, 243, 0.2); }
+  
+  .btn-cancel {
+    display: block;
+    width: 100%;
+    text-align: center;
+    margin-top: 15px;
+    color: #666;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+  }
+  .btn-cancel:hover { color: #333; }
+</style>
 
-  <ul>
-    <li>Total soal: {{ total }}</li>
-    <li>Sudah dijawab: {{ answered }}</li>
-    <li>Kosong: {{ blank }}</li>
-    <li>Ragu-ragu: {{ flagged }}</li>
-  </ul>
+<div class="confirm-card">
+  <div class="warning-icon">📝</div>
+  <h2 style="margin:0 0 10px;">Finish Attempt?</h2>
+  <p style="color:#666; font-size:15px; line-height:1.5;">
+    You are about to submit your answers for <b>{{ attempt.package.title }}</b>. This action cannot be undone.
+  </p>
 
-  <form method="post" style="display:flex; gap:10px;">
+  <div class="stat-grid">
+    <div class="stat-box" style="border-bottom: 3px solid #4caf50;">
+      <div class="stat-val">{{ answered }}</div>
+      <div class="stat-label">Answered</div>
+    </div>
+    <div class="stat-box" style="border-bottom: 3px solid #ff9800;">
+      <div class="stat-val">{{ flagged }}</div>
+      <div class="stat-label">Flagged</div>
+    </div>
+    <div class="stat-box" style="border-bottom: 3px solid #e0e0e0;">
+      <div class="stat-val">{{ blank }}</div>
+      <div class="stat-label">Empty</div>
+    </div>
+  </div>
+
+  <form method="post">
     {% csrf_token %}
-    <button type="submit">Submit Sekarang</button>
-    <a href="{% url 'attempt_player' attempt.id %}">Kembali</a>
+    <button type="submit" class="btn-submit">Yes, Submit My Answers</button>
   </form>
+  
+  <a href="{% url 'attempt_player' attempt.id %}" class="btn-cancel">Cancel & Go Back</a>
+</div>
 {% endblock %}

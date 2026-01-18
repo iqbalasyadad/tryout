@@ -1,0 +1,106 @@
+{% extends "core/base.html" %}
+{% block title %}Analysis | {{ package.title }}{% endblock %}
+
+{% block content %}
+<style>
+    .analysis-container {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .summary-card {
+        background: white;
+        padding: 30px;
+        border-radius: 12px;
+        border: 1px solid #ddd;
+        text-align: center;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    .score-big {
+        font-size: 56px;
+        font-weight: 800;
+        color: #0765f3;
+        margin: 10px 0;
+    }
+
+    .section-list {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .section-item {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        border: 1px solid #eee;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .bar-container {
+        flex: 1;
+        margin: 0 20px;
+        background: #f0f0f0;
+        height: 10px;
+        border-radius: 5px;
+        overflow: hidden;
+    }
+
+    .bar-fill {
+        height: 100%;
+        background: #0765f3;
+        border-radius: 5px;
+    }
+
+    .sec-name {
+        font-weight: 600;
+        width: 150px;
+    }
+
+    .sec-stat {
+        width: 100px;
+        text-align: right;
+        color: #666;
+        font-size: 14px;
+    }
+</style>
+
+<div class="analysis-container">
+    <a href="{% url 'dashboard' %}" style="margin-bottom:20px; display:inline-block;">&larr; Back to Dashboard</a>
+
+    <div class="summary-card">
+        <h2 style="margin:0; color:#555;">Performance Analysis</h2>
+        <h1 style="margin-top:10px;">{{ package.title }}</h1>
+
+        <div class="score-big">{{ overall_pct }}%</div>
+        <p>Correct Answer Rate</p>
+
+        <div>
+            <b>{{ total_correct }}</b> correct from <b>{{ total_questions }}</b> questions
+        </div>
+        <div style="font-size:13px; color:#888; margin-top:10px;">
+            Based on attempt submitted at {{ attempt.submitted_at|date:"d M Y, H:i" }}
+        </div>
+    </div>
+
+    <h3>Section Breakdown</h3>
+    <div class="section-list">
+        {% for sec in analysis %}
+        <div class="section-item">
+            <div class="sec-name">{{ sec.name }}</div>
+            <div class="bar-container">
+                <div class="bar-fill" style="width: {{ sec.score_pct }}%;"></div>
+            </div>
+            <div class="sec-stat">
+                <b>{{ sec.score_pct }}%</b><br>
+                <span style="font-size:11px;">{{ sec.correct }}/{{ sec.total }}</span>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

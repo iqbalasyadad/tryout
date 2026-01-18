@@ -12,6 +12,7 @@ urlpatterns = [
     path("attempts/<int:attempt_id>/autosave/", views.attempt_autosave, name="attempt_autosave"),
     path("packages/<slug:slug>/favorite/", views.toggle_favorite, name="toggle_favorite"),
     path("packages/<slug:slug>/purchase/", views.purchase_package, name="purchase_package"),
+    path("packages/<slug:slug>/analysis/", views.package_analysis, name="package_analysis"),
     path("attempts/<int:attempt_id>/heartbeat/", views.attempt_heartbeat, name="attempt_heartbeat"),
 
 ]

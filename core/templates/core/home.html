@@ -1,5 +1,192 @@
 {% extends "core/base.html" %}
-{% block title %}Home | Tryout{% endblock %}
+{% load static %}
+
+{% block title %}Tryout Platform - Master Your Exams{% endblock %}
+
 {% block content %}
-  <h1>Tryout app is running ✅</h1>
+<style>
+    /* Hero Section */
+    .hero {
+        text-align: center;
+        padding: 80px 20px;
+        background: linear-gradient(135deg, #f0f7ff 0%, #ffffff 100%);
+        border-radius: 20px;
+        margin-bottom: 60px;
+    }
+    .hero h1 {
+        font-size: 48px;
+        color: #1a237e;
+        margin-bottom: 20px;
+        font-weight: 800;
+        letter-spacing: -1px;
+    }
+    .hero p {
+        font-size: 18px;
+        color: #555;
+        max-width: 600px;
+        margin: 0 auto 40px;
+        line-height: 1.6;
+    }
+    .btn-hero {
+        display: inline-block;
+        padding: 15px 40px;
+        background: #0765f3;
+        color: white;
+        text-decoration: none;
+        font-weight: bold;
+        border-radius: 30px;
+        font-size: 16px;
+        transition: transform 0.2s, box-shadow 0.2s;
+        box-shadow: 0 4px 15px rgba(7, 101, 243, 0.3);
+    }
+    .btn-hero:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(7, 101, 243, 0.4);
+    }
+
+    /* Stats Grid */
+    .stats-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 30px;
+        max-width: 1000px;
+        margin: 0 auto 80px;
+    }
+    .stat-card {
+        background: white;
+        padding: 30px;
+        border-radius: 16px;
+        text-align: center;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+        border: 1px solid #f0f0f0;
+        transition: transform 0.3s;
+    }
+    .stat-card:hover {
+        transform: translateY(-5px);
+        border-color: #0765f3;
+    }
+    .stat-icon {
+        font-size: 40px;
+        margin-bottom: 15px;
+        display: inline-block;
+    }
+    .stat-number {
+        font-size: 36px;
+        font-weight: 800;
+        color: #333;
+        margin-bottom: 5px;
+        display: block;
+    }
+    .stat-label {
+        font-size: 14px;
+        color: #777;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    /* Features */
+    .features-section {
+        margin-bottom: 80px;
+    }
+    .section-title {
+        text-align: center;
+        font-size: 32px;
+        margin-bottom: 50px;
+        color: #333;
+    }
+    .feature-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 40px;
+    }
+    .feature-item {
+        text-align: center;
+    }
+    .feature-icon-box {
+        width: 60px;
+        height: 60px;
+        background: #e3f2fd;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+        color: #0765f3;
+        font-size: 24px;
+    }
+    .feature-title {
+        font-size: 18px;
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+    .feature-desc {
+        color: #666;
+        line-height: 1.6;
+        font-size: 14px;
+    }
+
+    @media(max-width: 768px) {
+        .hero h1 { font-size: 36px; }
+        .feature-grid { grid-template-columns: 1fr; }
+    }
+</style>
+
+<!-- Hero Section -->
+<div class="hero">
+    <h1>Platform Tryout Terbaik<br>Untuk Masa Depanmu</h1>
+    <p>Persiapkan dirimu menghadapi ujian dengan ribuan soal latihan yang terupdate, analisis mendalam, dan mode belajar yang fleksibel.</p>
+    
+    {% if user.is_authenticated %}
+        <!-- Dashboard button removed as requested -->
+    {% else %}
+        <a href="{% url 'login' %}" class="btn-hero">Start Learning Now</a>
+    {% endif %}
+</div>
+
+<!-- Stats Section -->
+<div class="stats-container">
+    <div class="stat-card">
+        <span class="stat-icon">📂</span>
+        <span class="stat-number">{{ stats.categories }}</span>
+        <span class="stat-label">Categories</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-icon">📦</span>
+        <span class="stat-number">{{ stats.packages }}</span>
+        <span class="stat-label">Packages</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-icon">📑</span>
+        <span class="stat-number">{{ stats.sections }}</span>
+        <span class="stat-label">Topics</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-icon">❓</span>
+        <span class="stat-number">{{ stats.questions }}</span>
+        <span class="stat-label">Questions</span>
+    </div>
+</div>
+
+<!-- Features Section -->
+<div class="features-section">
+    <h2 class="section-title">Why Choose Us?</h2>
+    <div class="feature-grid">
+        <div class="feature-item">
+            <div class="feature-icon-box">🎯</div>
+            <div class="feature-title">Real Exam Simulation</div>
+            <p class="feature-desc">Rasakan pengalaman ujian sesungguhnya dengan sistem timer dan scoring yang akurat.</p>
+        </div>
+        <div class="feature-item">
+            <div class="feature-icon-box">📊</div>
+            <div class="feature-title">Detailed Analysis</div>
+            <p class="feature-desc">Analisis performa mendalam per topik untuk mengetahui kelemahan dan kekuatanmu.</p>
+        </div>
+        <div class="feature-item">
+            <div class="feature-icon-box">🎓</div>
+            <div class="feature-title">Flexible Learning</div>
+            <p class="feature-desc">Mode belajar santai dengan pembahasan instan untuk pemahaman yang lebih baik.</p>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
